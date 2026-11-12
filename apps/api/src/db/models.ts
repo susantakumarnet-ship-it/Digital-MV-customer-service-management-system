@@ -9,6 +9,9 @@ import { OneTimeToken } from '../modules/auth/token.model';
 import { MASTER_MODELS } from '../modules/masters/master.models';
 import { Role } from '../modules/roles/role.model';
 import { User } from '../modules/users/user.model';
+import { Attachment } from '../core/storage/attachment.model';
+import { IdempotencyKey } from '../core/idempotency/idempotency.service';
+import { Complaint } from '../modules/complaints/complaint.model';
 
 export const ALL_MODELS = [
   AuditLog,
@@ -21,4 +24,7 @@ export const ALL_MODELS = [
   Role,
   User,
   ...Object.values(MASTER_MODELS),
+  Attachment,
+  IdempotencyKey,
+  Complaint,
 ];

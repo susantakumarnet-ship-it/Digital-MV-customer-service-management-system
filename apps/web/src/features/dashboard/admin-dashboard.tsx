@@ -11,11 +11,13 @@ import { api } from '@/lib/api';
 import { formatDateTime, timeAgo } from '@/lib/format';
 import type { AdminDashboardDto } from '@/lib/types';
 import { humanize } from '@/lib/utils';
+import { useAuth } from '@/features/auth/auth-context';
+import { useComplaintSummary } from '@/features/complaints/complaint-lib';
+import { ComplaintCharts, ComplaintKpiGrid } from './complaint-widgets';
 
 const CHART = { navy: '#0b1f4b', royal: '#1d4ed8', teal: '#0d9488', red: '#dc2626', grid: '#e2e8f0', axis: '#64748b' };
 
 const OPERATIONAL: { key: keyof AdminDashboardDto['operational']; label: string; phase: number }[] = [
-  { key: 'complaints', label: 'Complaints', phase: 3 },
   { key: 'workOrders', label: 'Work orders', phase: 4 },
   { key: 'materialRequests', label: 'Material requests', phase: 7 },
   { key: 'ncrs', label: 'NCRs', phase: 8 },
@@ -28,13 +30,34 @@ export function AdminDashboard() {
     refetchInterval: 60_000,
   });
   const d = q.data;
+  const { hasPermission } = useAuth();
+  const canComplaints = hasPermission('complaint.read');
+  const summary = useComplaintSummary(canComplaints);
 
   return (
     <div>
       <PageHeader
         title="Administrator dashboard"
-        description="Platform health, access and configuration. Complaint and service KPIs appear here as each module goes live."
+        description="Complaint KPIs, platform health, access and configuration. Service KPIs appear here as each module goes live."
       />
+      {canComplaints && (
+        <section className="mb-6 space-y-4" aria-labelledby="complaints-heading">
+          <h2 id="complaints-heading" className="text-base font-semibold text-navy-900">
+            Complaints
+          </h2>
+          {summary.isError ? (
+            <Card>
+              <ErrorState error={summary.error} onRetry={() => summary.refetch()} />
+            </Card>
+          ) : (
+            <>
+              <ComplaintKpiGrid data={summary.data} loading={summary.isLoading} keys={['total', 'new', 'open', 'awaitingCustomer', 'overdue', 'receivedToday']} />
+              <ComplaintCharts data={summary.data} loading={summary.isLoading} />
+            </>
+          )}
+          <h2 className="pt-2 text-base font-semibold text-navy-900">Platform</h2>
+        </section>
+      )}
       {q.isError ? (
         <Card>
           <ErrorState error={q.error} onRetry={() => q.refetch()} />

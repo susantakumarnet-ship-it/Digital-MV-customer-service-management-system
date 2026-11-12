@@ -18,10 +18,21 @@ import { notificationsRouter } from './modules/notifications/notifications.route
 import { rolesRouter } from './modules/roles/roles.routes';
 import { settingsRouter, workflowsRouter } from './modules/settings/settings.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { complaintsRouter } from './modules/complaints/complaints.routes';
+import { publicRouter } from './modules/complaints/public.routes';
+import { registerComplaintGuards } from './modules/complaints/complaint.guards';
+import { canAccessComplaint } from './modules/complaints/complaint.service';
+import { filesRouter, registerAttachmentOwner } from './modules/files/files.routes';
 
 export function createApp(): Express {
   const e = env();
   const app = express();
+
+  // Business-rule guards and attachment-owner access checks (fail closed if missing).
+  registerComplaintGuards();
+  registerAttachmentOwner('complaint', (auth, ownerId, a) =>
+    canAccessComplaint(auth, ownerId).then((ok) => ok && (a.context !== 'internal' || auth.permissions.has('complaint.readInternal'))),
+  );
 
   app.disable('x-powered-by');
   app.set('trust proxy', e.TRUST_PROXY);
@@ -94,6 +105,9 @@ export function createApp(): Express {
     auditRouter,
     notificationsRouter,
     dashboardRouter,
+    complaintsRouter,
+    publicRouter,
+    filesRouter,
   ];
   for (const r of routers) app.use(`/api/v1${r.base}`, r.router);
   // BRF §20 lists /api/v1/organizations as its own route: alias of /masters/organizations.

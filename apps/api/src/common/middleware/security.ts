@@ -31,7 +31,7 @@ function clean(value: unknown, depth: number): unknown {
 }
 
 /** Rate limiter that produces the standard error body (SEC-03). In-memory store: one instance. */
-export function limiter(opts: Partial<Options> & { windowMs: number; limit: number }) {
+export function limiter(opts: Partial<Options> & { windowMs: number; limit: Options['limit'] }) {
   return rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,

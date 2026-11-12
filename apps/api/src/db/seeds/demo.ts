@@ -133,6 +133,42 @@ export async function seedDemo(log: Log, demoPassword: string) {
   ])
     await upsert(InventoryItem, code, { name, unit, category });
 
+  log('Demo complaints…');
+  const { Complaint } = await import('../../modules/complaints/complaint.model');
+  const { createComplaint } = await import('../../modules/complaints/complaint.service');
+  if (!(await Complaint.exists({}))) {
+    const reqTypes = await RequestType.find({}).lean<Doc[]>();
+    const samples: [string, string, string, string][] = [
+      ['SITE-NF-01', 'BRK', 'Ring main unit trips repeatedly under load since this morning.', 'Northfield Utilities Control Room'],
+      ['SITE-MV-01', 'INSP', 'Request inspection of transformer after visible oil seepage near the radiator.', 'Midvale Estate Facilities'],
+      ['SITE-SP-01', 'BRK', 'Loss of supply to Block C. Protection relay shows earth fault alarm.', 'Southport Hospital Estates'],
+      ['SITE-RT-01', 'PM', 'Annual preventive maintenance due for MV switchgear panel 2.', 'Riverton Hub Operations'],
+      ['SITE-HC-01', 'WAR', 'New RMU installed last month shows intermittent SF6 low-pressure alarm.', 'Hillcrest Water Works'],
+    ];
+    for (const [siteCode, rt, description, customerName] of samples) {
+      const site = sites[siteCode];
+      const asset = await Asset.findOne({ siteId: site._id }).lean<Doc>();
+      await createComplaint(
+        { requestId: 'seed', ip: '127.0.0.1' },
+        {
+          customerName,
+          organizationName: customerName,
+          contactPerson: 'Duty Engineer',
+          mobile: '+44 7700 900000',
+          email: `${siteCode.toLowerCase()}@example.com`,
+          regionId: String(site.regionId),
+          cityId: String(site.cityId),
+          siteId: String(site._id),
+          assetId: asset ? String(asset._id) : undefined,
+          requestTypeId: String(reqTypes.find((x) => x.code === rt)!._id),
+          description,
+        },
+        { source: 'PUBLIC_FORM', consent: { accepted: true, version: '1.0' } },
+      );
+    }
+    log(`  + ${samples.length} complaints`);
+  }
+
   log('Demo users…');
   const roleByKey = new Map((await Role.find({ isSystem: true }).lean()).map((r) => [r.key, r._id]));
   const hash = await hashPassword(demoPassword);

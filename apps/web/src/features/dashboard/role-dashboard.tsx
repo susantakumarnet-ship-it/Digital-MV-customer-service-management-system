@@ -12,6 +12,7 @@ import { timeAgo } from '@/lib/format';
 import { useMasterOptions } from '@/lib/queries';
 import type { NotificationDto } from '@/lib/types';
 import { AdminDashboard } from './admin-dashboard';
+import { CustomerDashboard, ManagementDashboard, SupervisorDashboard } from './complaint-dashboards';
 
 interface RoleDashboardDef {
   permission: PermissionKey;
@@ -20,20 +21,8 @@ interface RoleDashboardDef {
   upcoming: { label: string; phase: number }[];
 }
 
-/** Honest Phase 2 role dashboards: what exists today, and when each widget arrives. */
+/** Honest role dashboards for roles whose modules arrive in later phases: what exists today, and when each widget arrives. */
 const ROLE_DASHBOARDS: RoleDashboardDef[] = [
-  {
-    permission: 'dashboard.supervisor',
-    title: 'Supervisor dashboard',
-    intro: 'Review incoming complaints, create work orders and keep field work on schedule.',
-    upcoming: [
-      { label: 'Complaint review queue and duplicate detection', phase: 3 },
-      { label: 'Work-order assignment board (list and calendar)', phase: 4 },
-      { label: 'Engineer workload and overdue work', phase: 4 },
-      { label: 'Pending material requests for approval', phase: 7 },
-      { label: 'Open NCRs and customer acceptance', phase: 8 },
-    ],
-  },
   {
     permission: 'dashboard.engineer',
     title: 'My work',
@@ -64,31 +53,14 @@ const ROLE_DASHBOARDS: RoleDashboardDef[] = [
       { label: 'Stock levels, reorder warnings and ledger', phase: 7 },
     ],
   },
-  {
-    permission: 'dashboard.management',
-    title: 'Management dashboard',
-    intro: 'Read-only view of service performance across your regions.',
-    upcoming: [
-      { label: 'Complaint volumes, SLA and ageing', phase: 9 },
-      { label: 'Resolution time, first-time-fix and repeat complaints', phase: 9 },
-      { label: 'Engineer utilisation and exports', phase: 9 },
-    ],
-  },
-  {
-    permission: 'dashboard.customer',
-    title: 'Customer portal',
-    intro: "Track your organisation's service requests and confirm completed work.",
-    upcoming: [
-      { label: "Your organisation's complaints and their status", phase: 3 },
-      { label: 'Requests for additional information', phase: 3 },
-      { label: 'Service acceptance and feedback', phase: 8 },
-    ],
-  },
 ];
 
 export function DashboardPage() {
   const { hasPermission } = useAuth();
   if (hasPermission('dashboard.admin')) return <AdminDashboard />;
+  if (hasPermission('dashboard.supervisor')) return <SupervisorDashboard />;
+  if (hasPermission('dashboard.management')) return <ManagementDashboard />;
+  if (hasPermission('dashboard.customer')) return <CustomerDashboard />;
   const def = ROLE_DASHBOARDS.find((d) => hasPermission(d.permission));
   return <RoleDashboard def={def} />;
 }

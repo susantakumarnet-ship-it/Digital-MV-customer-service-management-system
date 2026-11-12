@@ -16,6 +16,9 @@ process.env.MAIL_TRANSPORT = 'none';
 process.env.LOG_LEVEL = 'silent';
 process.env.PUBLIC_APP_URL = 'http://localhost:5173';
 process.env.WEB_ORIGINS = 'http://localhost:5173';
+// Throwaway private storage folder per test file.
+process.env.STORAGE_DRIVER = 'local';
+process.env.STORAGE_LOCAL_DIR = `${(await import('node:os')).tmpdir()}/mv-test-storage-${randomBytes(4).toString('hex')}`;
 
 beforeAll(async () => {
   const { connectDatabase } = await import('../src/db/connection');
@@ -31,4 +34,6 @@ afterAll(async () => {
     await mongoose.connection.dropDatabase();
     await mongoose.disconnect();
   }
+  const { rm } = await import('node:fs/promises');
+  await rm(process.env.STORAGE_LOCAL_DIR!, { recursive: true, force: true });
 });

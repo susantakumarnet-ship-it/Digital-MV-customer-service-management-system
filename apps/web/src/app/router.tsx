@@ -14,6 +14,10 @@ import { SettingsPage } from '@/features/settings/settings-page';
 import { UserDetailPage } from '@/features/users/user-detail-page';
 import { UsersPage } from '@/features/users/users-page';
 import { WorkflowsPage } from '@/features/workflows/workflows-page';
+import { ComplaintDetailPage } from '@/features/complaints/complaint-detail-page';
+import { ComplaintsListPage } from '@/features/complaints/complaints-list-page';
+import { NewComplaintPage } from '@/features/complaints/new-complaint-page';
+import { PublicComplaintPage } from '@/features/complaints/public-complaint-page';
 import { EmptyState } from '@/components/states';
 import { AppLayout } from './layout/app-layout';
 import { RouteError } from './route-error';
@@ -21,6 +25,7 @@ import { RouteError } from './route-error';
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/report', element: <PublicComplaintPage />, errorElement: <RouteError /> },
   { path: '/reset-password', element: <ResetPasswordPage mode="reset" /> },
   { path: '/activate', element: <ResetPasswordPage mode="activate" /> },
   {
@@ -50,6 +55,30 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      {
+        path: 'complaints',
+        element: (
+          <RequirePermission all={['complaint.read']}>
+            <ComplaintsListPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'complaints/new',
+        element: (
+          <RequirePermission all={['complaint.create']}>
+            <NewComplaintPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'complaints/:id',
+        element: (
+          <RequirePermission all={['complaint.read']}>
+            <ComplaintDetailPage />
+          </RequirePermission>
+        ),
+      },
       {
         path: 'notifications',
         element: (

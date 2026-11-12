@@ -117,6 +117,8 @@ export interface PublicSettings {
   dateFormat: string;
   supportEmail: string;
   supportPhone: string;
+  publicForm?: { enabled: boolean; privacyNoticeVersion: string; privacyNoticeText: string };
+  attachments?: { allowedExtensions: string[]; maxFileSizeMb: number; maxFilesPerRecord: number; maxTotalSizeMbPerRecord: number };
 }
 
 export interface AdminDashboardDto {

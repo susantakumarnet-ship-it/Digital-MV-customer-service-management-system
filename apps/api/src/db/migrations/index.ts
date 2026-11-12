@@ -26,4 +26,18 @@ export const MIGRATIONS: Migration[] = [
       // Index removal is intentionally not automated: dropping indexes on a live system is unsafe.
     },
   },
+  {
+    id: '2026-11-13-002-complaints',
+    description: 'Phase 3: complaints, attachments and idempotency-key collections and indexes',
+    up: async () => {
+      const { Complaint } = await import('../../modules/complaints/complaint.model');
+      const { Attachment } = await import('../../core/storage/attachment.model');
+      const { IdempotencyKey } = await import('../../core/idempotency/idempotency.service');
+      for (const model of [Complaint, Attachment, IdempotencyKey]) {
+        await model.createCollection().catch(() => undefined);
+        await model.createIndexes();
+      }
+    },
+    down: async () => undefined,
+  },
 ];

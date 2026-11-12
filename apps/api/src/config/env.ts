@@ -41,10 +41,34 @@ const envSchema = z
     SEED_DEMO_PASSWORD: z.string().optional(),
 
     API_DOCS_ENABLED: bool,
+
+    // Private file storage (SEC-05). local = private folder outside the web root (dev/UAT);
+    // s3 = any S3-compatible bucket (AWS S3, MinIO, Cloudflare R2, Azure via gateway…).
+    STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+    STORAGE_LOCAL_DIR: z.string().default('var/storage'),
+    S3_BUCKET: z.string().optional(),
+    S3_REGION: z.string().default('us-east-1'),
+    S3_ENDPOINT: z.string().url().optional(),
+    S3_ACCESS_KEY_ID: z.string().optional(),
+    S3_SECRET_ACCESS_KEY: z.string().optional(),
+    S3_FORCE_PATH_STYLE: bool,
+    /** HMAC key for signed download URLs (local driver). Defaults to a key derived from JWT_ACCESS_SECRET. */
+    FILE_URL_SECRET: z.string().min(32).optional(),
+    SIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+    /** Optional ClamAV daemon for upload scanning (D-23). */
+    CLAMAV_HOST: z.string().optional(),
+    CLAMAV_PORT: z.coerce.number().int().default(3310),
+
+    // Optional Cloudflare Turnstile CAPTCHA for the public form (D-16/D-32).
+    TURNSTILE_SITE_KEY: z.string().optional(),
+    TURNSTILE_SECRET_KEY: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.MAIL_TRANSPORT === 'smtp' && !env.SMTP_HOST) {
       ctx.addIssue({ code: 'custom', path: ['SMTP_HOST'], message: 'SMTP_HOST is required when MAIL_TRANSPORT=smtp' });
+    }
+    if (env.STORAGE_DRIVER === 's3' && !env.S3_BUCKET) {
+      ctx.addIssue({ code: 'custom', path: ['S3_BUCKET'], message: 'S3_BUCKET is required when STORAGE_DRIVER=s3' });
     }
     if (env.NODE_ENV === 'production' && !env.COOKIE_SECURE) {
       ctx.addIssue({ code: 'custom', path: ['COOKIE_SECURE'], message: 'COOKIE_SECURE must be true in production' });

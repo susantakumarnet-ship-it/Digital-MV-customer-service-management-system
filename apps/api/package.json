@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "@aws-sdk/client-s3": "^3.1167.0",
+    "@aws-sdk/s3-request-presigner": "^3.1167.0",
     "@mv/shared": "*",
     "@node-rs/argon2": "^2.0.2",
     "cookie-parser": "^1.4.7",
@@ -26,6 +28,7 @@
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
+    "file-type": "^22.3.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.24.0",

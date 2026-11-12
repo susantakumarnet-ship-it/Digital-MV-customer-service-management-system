@@ -4,7 +4,7 @@ Web-based complaint and field-service management: complaint intake → review �
 
 **Stack:** React 18 + TypeScript + Tailwind (apps/web) · Node.js + Express 5 + TypeScript (apps/api) · MongoDB (replica set) via Mongoose · shared Zod schemas and permission catalogue (packages/shared).
 
-**Delivery status:** Phase 2 (foundation: authentication, RBAC, master data, configuration, audit, app shell) — see [docs/phase-2/phase-2-report.md](docs/phase-2/phase-2-report.md). Requirements, architecture and open decisions are in [docs/phase-1](docs/phase-1/).
+**Delivery status:** Phase 3 (public complaint form and complaint management) complete — see [docs/phase-3/phase-3-report.md](docs/phase-3/phase-3-report.md). Phase 2 foundation: [docs/phase-2/phase-2-report.md](docs/phase-2/phase-2-report.md). Requirements, architecture and open decisions are in [docs/phase-1](docs/phase-1/).
 
 ## Prerequisites
 
@@ -46,6 +46,7 @@ Open http://localhost:5610 and sign in as `admin` with `SEED_ADMIN_PASSWORD`. Yo
 | `npm run build` | Production bundles (`apps/api/dist`, `apps/web/dist`) |
 | `npm run migrate` | Apply pending migrations (`npm run migrate:status -w @mv/api` to inspect) |
 | `npm run seed` / `npm run seed:demo` | Idempotent seeding (demo refused when `NODE_ENV=production`) |
+| `npm run e2e` | Playwright end-to-end tests against the production build (fresh local `mv_e2e` database; never Atlas) |
 | `npm run openapi` | Regenerate [docs/api/openapi.json](docs/api/openapi.json) |
 
 ## Repository layout

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bell, Database, FileClock, GitBranch, LayoutDashboard, Settings2, ShieldCheck, Users } from 'lucide-react';
+import { Bell, ClipboardList, Database, FileClock, GitBranch, LayoutDashboard, Settings2, ShieldCheck, Users } from 'lucide-react';
 import type { PermissionKey } from '@mv/shared';
 
 export interface NavItem {
@@ -20,6 +20,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/complaints', label: 'Complaints', icon: ClipboardList, anyOf: ['complaint.read'] },
       { to: '/notifications', label: 'Notifications', icon: Bell, anyOf: ['notification.read'] },
     ],
   },
@@ -54,5 +55,6 @@ export const SEGMENT_LABELS: Record<string, string> = {
   audit: 'Audit Log',
   profile: 'Profile & Security',
   notifications: 'Notifications',
+  complaints: 'Complaints',
   new: 'New',
 };

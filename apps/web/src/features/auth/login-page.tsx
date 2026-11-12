@@ -113,7 +113,10 @@ export function LoginPage() {
         </Button>
       </form>
       <p className="mt-8 text-center text-xs text-slate-500">
-        Need to report a problem without an account? The public complaint form will be available in Phase 3.
+        Need to report a problem without an account?{' '}
+        <Link to="/report" className="font-medium text-royal-700 hover:underline">
+          Submit a complaint online
+        </Link>
       </p>
     </AuthLayout>
   );

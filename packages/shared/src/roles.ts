@@ -167,6 +167,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       'notification.read',
       'master.read',
       'complaint.read',
+      'complaint.export',
       'workOrder.read',
       'visit.read',
       'inspection.read',
