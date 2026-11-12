@@ -1,0 +1,30 @@
+# Production-like local stack: MongoDB single-node replica set + API + web.
+# Usage: docker compose --env-file apps/api/.env up --build   → http://localhost:8080
+# (Not needed for day-to-day development; see README.)
+services:
+  mongo:
+    image: mongo:8.0
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    volumes: [mongo-data:/data/db]
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}).ok }"]
+      interval: 10s
+      retries: 10
+
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    env_file: apps/api/.env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/?replicaSet=rs0
+      NODE_ENV: staging
+      TRUST_PROXY: '1'
+    depends_on:
+      mongo: { condition: service_healthy }
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    ports: ['8080:8080']
+    depends_on: [api]
+
+volumes:
+  mongo-data:

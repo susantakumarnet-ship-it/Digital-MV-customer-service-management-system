@@ -1,0 +1,38 @@
+{
+  "name": "digital-mv-csms",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Digital MV Customer Service Management System",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,cyan \"npm run dev -w @mv/api\" \"npm run dev -w @mv/web\"",
+    "build": "npm run build -w @mv/api && npm run build -w @mv/web",
+    "typecheck": "npm run typecheck -w @mv/shared && npm run typecheck -w @mv/api && npm run typecheck -w @mv/web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "npm run test -w @mv/shared && npm run test -w @mv/api && npm run test -w @mv/web",
+    "migrate": "npm run migrate -w @mv/api",
+    "seed": "npm run seed -w @mv/api",
+    "seed:demo": "npm run seed:demo -w @mv/api",
+    "openapi": "npm run openapi -w @mv/api",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.65.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.18.0"
+  }
+}

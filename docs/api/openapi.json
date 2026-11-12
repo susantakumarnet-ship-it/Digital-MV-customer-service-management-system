@@ -1,0 +1,3285 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Digital MV Customer Service Management System API",
+    "version": "1.0.0",
+    "description": "REST API for the Digital MV CSMS. All endpoints are under `/api/v1`.\n\n**Authentication:** `POST /auth/login` returns a short-lived bearer access token and sets an HttpOnly\nrefresh cookie. Send `Authorization: Bearer <token>`. Refresh with `POST /auth/refresh`\n(requires the `X-CSRF-Token` header matching the `mv_csrf` cookie).\n\n**Errors:** `{ \"error\": { \"code\", \"message\", \"fields?\", \"requestId\" } }` with status\n400 validation · 401 unauthenticated · 403 forbidden · 404 not found · 409 state conflict ·\n422 business rule · 429 rate limited · 500 unexpected.\n\n**Lists:** `?page=&limit=` (max 100) → `{ data: [], meta: { page, limit, total, pages } }`.\n\n**Permissions:** every protected endpoint lists its required permission keys. Default deny."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/api/v1/audit-logs": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "Search audit history",
+        "description": "Requires: `audit.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "entityType",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": false,
+            "name": "entityId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": false,
+            "name": "actorId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "required": false,
+            "name": "action",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUCCESS",
+                "FAILURE"
+              ]
+            },
+            "required": false,
+            "name": "outcome",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/audit-logs/entity-types": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "Distinct entity types present in the audit log (for filters)",
+        "description": "Requires: `audit.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/audit-logs/{id}": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "One audit entry with redacted before/after values",
+        "description": "Requires: `audit.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sign in with email/username and password",
+        "description": "Returns an access token and sets the refresh cookie, or `{ mfaRequired, challengeToken }` when MFA is enabled.\n\nPublic endpoint (no authentication).",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 254
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "identifier",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login/mfa": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Complete sign-in with a TOTP or recovery code",
+        "description": "Public endpoint (no authentication).",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "challengeToken": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 2000
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "challengeToken",
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Rotate the refresh token and obtain a new access token",
+        "description": "Cookie-authenticated. Requires `X-CSRF-Token` equal to the `mv_csrf` cookie.\n\nPublic endpoint (no authentication).",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sign out of the current session",
+        "description": "Public endpoint (no authentication).",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Sign out of all sessions including this one",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request a password reset email",
+        "description": "Always returns 202 regardless of whether the account exists.\n\nPublic endpoint (no authentication).",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Set a new password using a reset or activation token",
+        "description": "Public endpoint (no authentication).",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 20,
+                    "maxLength": 200
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 128
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "password",
+                  "confirmPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Current user, roles, effective permissions and scope",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Update own profile (name, phone, timezone)",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 25
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "timezone": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 60
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Change own password (signs out other devices)",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 128
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword",
+                  "confirmPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sessions": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "List my active sessions",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sessions/{id}": {
+      "delete": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Revoke one of my sessions",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/activity": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "My sign-in history",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/setup": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Begin TOTP MFA enrolment (returns otpauth URL for QR code)",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/enable": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Confirm MFA enrolment with a code; returns one-time recovery codes",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  }
+                },
+                "required": [
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/disable": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Disable MFA (password + current code required)",
+        "description": "Any authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "password",
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/admin": {
+      "get": {
+        "tags": [
+          "Dashboards"
+        ],
+        "summary": "Administrator dashboard: platform health, users, master data, security events",
+        "description": "Requires: `dashboard.admin`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters": {
+      "get": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Master data resource definitions (fields, refs, groups)",
+        "description": "Requires: `master.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}": {
+      "get": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "List master records (search, status, parent filter, pagination)",
+        "description": "Requires: `master.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "ALL"
+              ],
+              "default": "ALL"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 40
+            },
+            "required": false,
+            "name": "parentField",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": false,
+            "name": "parentId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Create a master record",
+        "description": "Requires: `master.create`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}/options": {
+      "get": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Dropdown options (active records) with parent ids for cascading selects",
+        "description": "Requires: `master.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 40
+            },
+            "required": false,
+            "name": "parentField",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": false,
+            "name": "parentId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "nullable": true,
+              "default": false
+            },
+            "required": false,
+            "name": "includeInactive",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}/import-template": {
+      "get": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Download the bulk-import template (xlsx or csv)",
+        "description": "Requires: `master.import`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xlsx",
+                "csv"
+              ],
+              "default": "xlsx"
+            },
+            "required": false,
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}/import": {
+      "post": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Bulk import (multipart field \"file\"). dryRun=true validates only; otherwise all-or-nothing commit.",
+        "description": "Requires: `master.import`, `master.create`, `master.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "true"
+            },
+            "required": false,
+            "name": "dryRun",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}/{id}": {
+      "get": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Get one master record",
+        "description": "Requires: `master.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Update a master record (partial)",
+        "description": "Requires: `master.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Deactivate (records are never deleted — BR-018)",
+        "description": "Requires: `master.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/masters/{resource}/{id}/activate": {
+      "post": {
+        "tags": [
+          "Master data"
+        ],
+        "summary": "Re-activate a master record",
+        "description": "Requires: `master.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "organizations",
+                "regions",
+                "cities",
+                "sites",
+                "equipmentTypes",
+                "assets",
+                "requestTypes",
+                "priorities",
+                "warehouses",
+                "inventoryItems"
+              ]
+            },
+            "required": true,
+            "name": "resource",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "My in-app notifications",
+        "description": "Requires: `notification.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "unread",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Number of unread in-app notifications",
+        "description": "Requires: `notification.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark one notification as read",
+        "description": "Requires: `notification.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark all my notifications as read",
+        "description": "Requires: `notification.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/roles/permissions": {
+      "get": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "Permission catalogue (modules and actions)",
+        "description": "Requires: `role.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/roles": {
+      "get": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "List roles with user counts",
+        "description": "Any authenticated user. Requires one of: `role.read`, `user.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "boolean",
+              "nullable": true,
+              "default": false
+            },
+            "required": false,
+            "name": "includeInactive",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "Create a custom role",
+        "description": "Requires: `role.create`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 500
+                  }
+                },
+                "required": [
+                  "name",
+                  "permissions"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{id}": {
+      "get": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "Get a role",
+        "description": "Requires: `role.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "Update a role (name, description, permissions)",
+        "description": "Requires: `role.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 500
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "Deactivate a custom role (must have no active users)",
+        "description": "Requires: `role.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{id}/activate": {
+      "post": {
+        "tags": [
+          "Roles & permissions"
+        ],
+        "summary": "Re-activate a custom role",
+        "description": "Requires: `role.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/settings/public": {
+      "get": {
+        "tags": [
+          "System configuration"
+        ],
+        "summary": "Public, non-sensitive settings (branding, timezone, public form notice)",
+        "description": "Public endpoint (no authentication).",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "tags": [
+          "System configuration"
+        ],
+        "summary": "All configuration groups",
+        "description": "Requires: `settings.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/settings/{group}": {
+      "put": {
+        "tags": [
+          "System configuration"
+        ],
+        "summary": "Replace one configuration group (validated, audited)",
+        "description": "Requires: `settings.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "general",
+                "numbering",
+                "workflow",
+                "attachments",
+                "security",
+                "notifications",
+                "publicForm"
+              ]
+            },
+            "required": true,
+            "name": "group",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "nullable": true
+                    }
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/workflows": {
+      "get": {
+        "tags": [
+          "Workflow configuration"
+        ],
+        "summary": "All workflow definitions (states + transitions)",
+        "description": "Any authenticated user. Requires one of: `workflow.read`, `master.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/workflows/{entity}": {
+      "get": {
+        "tags": [
+          "Workflow configuration"
+        ],
+        "summary": "One workflow definition",
+        "description": "Any authenticated user. Requires one of: `workflow.read`, `master.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "complaint",
+                "workOrder",
+                "visit",
+                "inspectionReport",
+                "materialRequest",
+                "ncr"
+              ]
+            },
+            "required": true,
+            "name": "entity",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Workflow configuration"
+        ],
+        "summary": "Change status labels/colours and enable/disable OPTIONAL transitions",
+        "description": "Mandatory transitions, guards and permissions are not editable (prevents bypassing business rules).\n\nRequires: `workflow.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "complaint",
+                "workOrder",
+                "visit",
+                "inspectionReport",
+                "materialRequest",
+                "ncr"
+              ]
+            },
+            "required": true,
+            "name": "entity",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "states": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "tone": {
+                          "type": "string",
+                          "enum": [
+                            "neutral",
+                            "info",
+                            "primary",
+                            "warning",
+                            "success",
+                            "danger",
+                            "accent"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "label",
+                        "tone"
+                      ]
+                    }
+                  },
+                  "transitions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "label",
+                        "enabled"
+                      ]
+                    }
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List users (search, status, role, organization)",
+        "description": "Requires: `user.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "LOCKED",
+                "PENDING_ACTIVATION",
+                "ALL"
+              ],
+              "default": "ALL"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": false,
+            "name": "roleId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": false,
+            "name": "organizationId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create a user. Without a password, an activation email is sent.",
+        "description": "Requires: `user.create`, `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "username": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 60,
+                        "pattern": "^[a-z0-9._-]+$"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 25
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "jobTitle": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "roleIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 10
+                  },
+                  "organizationId": {
+                    "type": "string",
+                    "nullable": true,
+                    "pattern": "^[a-f\\d]{24}$"
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "global": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "organizationIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "maxItems": 500,
+                        "default": []
+                      },
+                      "regionIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "maxItems": 500,
+                        "default": []
+                      },
+                      "siteIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "maxItems": 2000,
+                        "default": []
+                      }
+                    }
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 128
+                  },
+                  "mustChangePassword": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "roleIds",
+                  "scope"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get a user",
+        "description": "Requires: `user.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user profile fields",
+        "description": "Requires: `user.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "username": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 60,
+                        "pattern": "^[a-z0-9._-]+$"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 25
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "jobTitle": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  "organizationId": {
+                    "type": "string",
+                    "nullable": true,
+                    "pattern": "^[a-f\\d]{24}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/roles": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Replace the user's roles (anti-escalation enforced)",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roleIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 10
+                  }
+                },
+                "required": [
+                  "roleIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/scope": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Replace the user's data scope (organizations / regions / sites / global)",
+        "description": "Requires: `user.update`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "global": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "organizationIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "maxItems": 500,
+                        "default": []
+                      },
+                      "regionIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "maxItems": 500,
+                        "default": []
+                      },
+                      "siteIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "maxItems": 2000,
+                        "default": []
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "scope"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Deactivate a user (revokes all sessions)",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/activate": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Re-activate a user",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/unlock": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Clear a login lockout",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/reset-password": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Set a password or email a reset link",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 128
+                  },
+                  "mustChangePassword": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/mfa/reset": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Reset the user's MFA enrolment (lost device)",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/sessions/revoke": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Sign the user out of all sessions",
+        "description": "Requires: `user.administer`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/login-activity": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Sign-in history for a user",
+        "description": "Requires: `user.read`, `audit.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+name: Release images
+
+# Builds and publishes container images. Staging images on every push to main; production images on
+# version tags (v*). The deployment step itself is added in Phase 10 once hosting is chosen (D-10);
+# the `production` GitHub environment must be configured with required reviewers (manual approval).
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+    strategy:
+      matrix:
+        app: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.app }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
