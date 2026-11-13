@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bell, ClipboardList, Database, FileClock, GitBranch, LayoutDashboard, Settings2, ShieldCheck, Users } from 'lucide-react';
+import { Bell, CalendarRange, ClipboardList, Database, Wrench, FileClock, GitBranch, LayoutDashboard, Settings2, ShieldCheck, Users } from 'lucide-react';
 import type { PermissionKey } from '@mv/shared';
 
 export interface NavItem {
@@ -9,6 +9,8 @@ export interface NavItem {
   /** Visible when the user holds ANY of these (empty = any authenticated user). */
   anyOf?: PermissionKey[];
   end?: boolean;
+  /** Label shown to field engineers (workOrder.accept without workOrder.assign). */
+  engineerLabel?: string;
 }
 
 export interface NavGroup {
@@ -21,6 +23,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/complaints', label: 'Complaints', icon: ClipboardList, anyOf: ['complaint.read'] },
+      { to: '/work-orders', label: 'Work orders', icon: Wrench, anyOf: ['workOrder.read'], engineerLabel: 'My work orders' },
+      { to: '/work-orders/board', label: 'Assignment board', icon: CalendarRange, anyOf: ['workOrder.assign'] },
       { to: '/notifications', label: 'Notifications', icon: Bell, anyOf: ['notification.read'] },
     ],
   },
@@ -39,7 +43,13 @@ export const NAV_GROUPS: NavGroup[] = [
 
 /** Groups with items filtered by permission; empty groups removed. */
 export function visibleNav(hasAny: (ps: PermissionKey[]) => boolean): NavGroup[] {
-  return NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.anyOf?.length || hasAny(i.anyOf)) })).filter(
+  const engineer = hasAny(['workOrder.accept']) && !hasAny(['workOrder.assign']);
+  return NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items
+      .filter((i) => !i.anyOf?.length || hasAny(i.anyOf))
+      .map((i) => (engineer && i.engineerLabel ? { ...i, label: i.engineerLabel } : i)),
+  })).filter(
     (g) => g.items.length > 0,
   );
 }
@@ -56,5 +66,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   profile: 'Profile & Security',
   notifications: 'Notifications',
   complaints: 'Complaints',
+  'work-orders': 'Work orders',
+  board: 'Assignment board',
   new: 'New',
 };

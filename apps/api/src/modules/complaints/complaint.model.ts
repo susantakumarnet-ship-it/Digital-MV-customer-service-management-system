@@ -83,6 +83,9 @@ const complaintSchema = new Schema(
     duplicateOfId: ref('Complaint'),
     linkedDuplicateIds: [ref('Complaint')],
 
+    // Engineers assigned through any active work order (personal access, kept in sync by Phase 4).
+    engineerIds: { type: [ref('User')], default: [] },
+
     consent: {
       accepted: { type: Boolean, required: true },
       version: String,
@@ -111,6 +114,7 @@ complaintSchema.index({ supervisorId: 1, status: 1 });
 complaintSchema.index({ email: 1, siteId: 1, receivedAt: -1 });
 complaintSchema.index({ receivedAt: -1 });
 complaintSchema.index({ duplicateOfId: 1 });
+complaintSchema.index({ engineerIds: 1 });
 
 export type ComplaintDoc = InferSchemaType<typeof complaintSchema> & { _id: Types.ObjectId };
 export const Complaint = defineModel('Complaint', complaintSchema);
@@ -120,5 +124,5 @@ export const COMPLAINT_SCOPE = {
   organization: 'organizationId',
   region: 'regionId',
   site: 'siteId',
-  personal: ['supervisorId', 'createdBy'],
+  personal: ['supervisorId', 'createdBy', 'engineerIds'],
 };

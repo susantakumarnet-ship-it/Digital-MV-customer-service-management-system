@@ -6,6 +6,8 @@ import { availableActions, getDefinition } from '../../core/workflow/workflow.en
 import { Asset, EquipmentType, Priority, RequestType } from '../masters/master.models';
 import { User } from '../users/user.model';
 import { Complaint } from './complaint.model';
+import { WorkOrder } from '../work-orders/work-order.model';
+import { getSettingsGroup } from '../../core/settings/settings.service';
 
 type Doc = Record<string, any>;
 
@@ -93,6 +95,23 @@ export async function toDetail(c: Doc, auth: AuthContext): Promise<ComplaintDeta
     Attachment.find({ ownerType: 'complaint', ownerId: c._id, removedAt: null }).sort({ createdAt: 1 }).lean<Doc[]>(),
     Complaint.find({ _id: { $in: c.linkedDuplicateIds ?? [] } }).select('referenceNo status receivedAt').lean<Doc[]>(),
   ]);
+  // Work orders raised against this complaint (Phase 4).
+  const [wos, woDef, wfSettings] = await Promise.all([
+    WorkOrder.find({ complaintId: c._id }).sort({ createdAt: 1 }).select('workOrderNo title status assigneeIds plannedVisitAt dueAt').lean<Doc[]>(),
+    getDefinition('workOrder'),
+    getSettingsGroup('workflow'),
+  ]);
+  const woStates = new Map(woDef.states.map((s) => [s.key, s]));
+  const woUsers = new Map(
+    (await User.find({ _id: { $in: wos.flatMap((w) => w.assigneeIds ?? []) } }).select('name').lean<Doc[]>()).map((u) => [String(u._id), u.name]),
+  );
+  const activeWos = wos.filter((w) => w.status !== 'CANCELLED').length;
+  const canCreateWorkOrder =
+    p.has('workOrder.create') &&
+    Boolean(c.classifiedAt && c.priorityId) &&
+    ['UNDER_REVIEW', 'REOPENED', 'ASSIGNED', 'IN_PROGRESS'].includes(c.status) &&
+    (wfSettings.allowMultipleWorkOrdersPerComplaint || activeWos === 0);
+
   // Customers never see staff workflow actions.
   const actions = isCustomer ? [] : await availableActions('complaint', c as never, { auth });
   const locked = (def.states.find((s) => s.key === c.status)?.locked ?? false) as boolean;
@@ -129,6 +148,19 @@ export async function toDetail(c: Doc, auth: AuthContext): Promise<ComplaintDeta
       at: m.at,
     })),
     linkedDuplicates: duplicates.map((d) => ({ id: String(d._id), referenceNo: d.referenceNo, status: d.status, receivedAt: d.receivedAt })),
+    workOrders: isCustomer
+      ? []
+      : wos.map((w) => ({
+          id: String(w._id),
+          workOrderNo: w.workOrderNo,
+          title: w.title,
+          status: w.status,
+          statusLabel: woStates.get(w.status)?.label ?? w.status,
+          statusTone: woStates.get(w.status)?.tone ?? 'neutral',
+          assignees: (w.assigneeIds ?? []).map((a: unknown) => woUsers.get(String(a)) ?? 'Unknown'),
+          plannedVisitAt: w.plannedVisitAt ?? null,
+          dueAt: w.dueAt ?? null,
+        })),
     statusHistory: (c.statusHistory ?? []).map((h: Doc) => ({
       from: h.from,
       to: h.to,
@@ -145,6 +177,7 @@ export async function toDetail(c: Doc, auth: AuthContext): Promise<ComplaintDeta
       canAddNote: p.has('complaint.update'),
       canAttach: !locked && (p.has('complaint.update') || (isCustomer && c.status !== 'CLOSED')),
       canRespond: isCustomer && c.status === 'AWAITING_CUSTOMER_INFO',
+      canCreateWorkOrder,
     },
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,

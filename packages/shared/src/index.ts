@@ -9,3 +9,4 @@ export * from './schemas/masters';
 export * from './schemas/settings';
 export * from './schemas/workflow';
 export * from './schemas/complaints';
+export * from './schemas/work-orders';

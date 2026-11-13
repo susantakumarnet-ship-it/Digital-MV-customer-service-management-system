@@ -71,6 +71,7 @@ These are tracked items found during delivery. Each must be closed, or explicitl
 |---|---|
 | 2026-11-12 | Register created in Phase 1. |
 | 2026-11-12 | D-02, D-03 and D-27 confirmed. The project owner accepted Phase 1. |
+| 2026-11-13 | Phase 4 accepted. Work-order workflow v2 adds the system "reassign" transition (migration 003).|
 | 2026-11-13 | Phase 3 accepted. D-01 approved as implemented.|
 | 2026-11-13 | Phase 3: D-13, D-20, D-29, D-30 and D-31 confirmed; D-32 added.|
 | 2026-11-12 | Phase 2: added D-28 (Atlas database), D-29, D-30 and the known-issues register (K-01 to K-05). Nodemailer upgraded to v10 to clear its high-severity advisories. |

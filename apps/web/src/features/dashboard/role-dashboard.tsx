@@ -13,6 +13,7 @@ import { useMasterOptions } from '@/lib/queries';
 import type { NotificationDto } from '@/lib/types';
 import { AdminDashboard } from './admin-dashboard';
 import { CustomerDashboard, ManagementDashboard, SupervisorDashboard } from './complaint-dashboards';
+import { EngineerDashboardWidgets } from './work-order-widgets';
 
 interface RoleDashboardDef {
   permission: PermissionKey;
@@ -23,17 +24,6 @@ interface RoleDashboardDef {
 
 /** Honest role dashboards for roles whose modules arrive in later phases: what exists today, and when each widget arrives. */
 const ROLE_DASHBOARDS: RoleDashboardDef[] = [
-  {
-    permission: 'dashboard.engineer',
-    title: 'My work',
-    intro: 'Your assigned jobs, visits, time tracking and inspection reports.',
-    upcoming: [
-      { label: "Assigned work orders, today's and upcoming visits", phase: 4 },
-      { label: 'Six-step time tracking and site inspections', phase: 5 },
-      { label: 'Returned reports awaiting correction', phase: 6 },
-      { label: 'Material requests', phase: 7 },
-    ],
-  },
   {
     permission: 'dashboard.reviewer',
     title: 'Reviewer dashboard',
@@ -61,8 +51,18 @@ export function DashboardPage() {
   if (hasPermission('dashboard.supervisor')) return <SupervisorDashboard />;
   if (hasPermission('dashboard.management')) return <ManagementDashboard />;
   if (hasPermission('dashboard.customer')) return <CustomerDashboard />;
+  if (hasPermission('dashboard.engineer')) return <EngineerDashboard />;
   const def = ROLE_DASHBOARDS.find((d) => hasPermission(d.permission));
   return <RoleDashboard def={def} />;
+}
+
+function EngineerDashboard() {
+  return (
+    <div>
+      <PageHeader title="My work" description="Your assigned jobs and planned visits. Accept new work as soon as you can." />
+      <EngineerDashboardWidgets />
+    </div>
+  );
 }
 
 function RoleDashboard({ def }: { def?: RoleDashboardDef }) {

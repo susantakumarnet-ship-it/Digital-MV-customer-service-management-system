@@ -18,6 +18,8 @@ import { notificationsRouter } from './modules/notifications/notifications.route
 import { rolesRouter } from './modules/roles/roles.routes';
 import { settingsRouter, workflowsRouter } from './modules/settings/settings.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { complaintWorkOrdersRouter, engineerRouter, workOrdersRouter } from './modules/work-orders/work-orders.routes';
+import { registerWorkOrderGuards } from './modules/work-orders/work-order.guards';
 import { complaintsRouter } from './modules/complaints/complaints.routes';
 import { publicRouter } from './modules/complaints/public.routes';
 import { registerComplaintGuards } from './modules/complaints/complaint.guards';
@@ -30,6 +32,7 @@ export function createApp(): Express {
 
   // Business-rule guards and attachment-owner access checks (fail closed if missing).
   registerComplaintGuards();
+  registerWorkOrderGuards();
   registerAttachmentOwner('complaint', (auth, ownerId, a) =>
     canAccessComplaint(auth, ownerId).then((ok) => ok && (a.context !== 'internal' || auth.permissions.has('complaint.readInternal'))),
   );
@@ -108,6 +111,9 @@ export function createApp(): Express {
     complaintsRouter,
     publicRouter,
     filesRouter,
+    workOrdersRouter,
+    complaintWorkOrdersRouter,
+    engineerRouter,
   ];
   for (const r of routers) app.use(`/api/v1${r.base}`, r.router);
   // BRF §20 lists /api/v1/organizations as its own route: alias of /masters/organizations.

@@ -14,11 +14,12 @@ import { humanize } from '@/lib/utils';
 import { useAuth } from '@/features/auth/auth-context';
 import { useComplaintSummary } from '@/features/complaints/complaint-lib';
 import { ComplaintCharts, ComplaintKpiGrid } from './complaint-widgets';
+import { useWorkOrderSummary } from '@/features/work-orders/wo-lib';
+import { WorkOrderCharts, WorkOrderKpiGrid } from './work-order-widgets';
 
 const CHART = { navy: '#0b1f4b', royal: '#1d4ed8', teal: '#0d9488', red: '#dc2626', grid: '#e2e8f0', axis: '#64748b' };
 
 const OPERATIONAL: { key: keyof AdminDashboardDto['operational']; label: string; phase: number }[] = [
-  { key: 'workOrders', label: 'Work orders', phase: 4 },
   { key: 'materialRequests', label: 'Material requests', phase: 7 },
   { key: 'ncrs', label: 'NCRs', phase: 8 },
 ];
@@ -33,6 +34,8 @@ export function AdminDashboard() {
   const { hasPermission } = useAuth();
   const canComplaints = hasPermission('complaint.read');
   const summary = useComplaintSummary(canComplaints);
+  const canWorkOrders = hasPermission('workOrder.read');
+  const wo = useWorkOrderSummary(canWorkOrders);
 
   return (
     <div>
@@ -55,9 +58,26 @@ export function AdminDashboard() {
               <ComplaintCharts data={summary.data} loading={summary.isLoading} />
             </>
           )}
-          <h2 className="pt-2 text-base font-semibold text-navy-900">Platform</h2>
         </section>
       )}
+      {canWorkOrders && (
+        <section className="mb-6 space-y-4" aria-labelledby="wo-heading">
+          <h2 id="wo-heading" className="text-base font-semibold text-navy-900">
+            Work orders
+          </h2>
+          {wo.isError ? (
+            <Card>
+              <ErrorState error={wo.error} onRetry={() => wo.refetch()} />
+            </Card>
+          ) : (
+            <>
+              <WorkOrderKpiGrid data={wo.data} loading={wo.isLoading} keys={['open', 'unassigned', 'awaitingAcceptance', 'inProgress', 'overdue']} />
+              <WorkOrderCharts data={wo.data} loading={wo.isLoading} />
+            </>
+          )}
+        </section>
+      )}
+      {(canComplaints || canWorkOrders) && <h2 className="mb-4 text-base font-semibold text-navy-900">Platform</h2>}
       {q.isError ? (
         <Card>
           <ErrorState error={q.error} onRetry={() => q.refetch()} />

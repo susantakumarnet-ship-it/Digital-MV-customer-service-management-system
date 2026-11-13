@@ -208,9 +208,11 @@ export interface ComplaintDetailDto extends ComplaintSummaryDto {
   internalNotes?: { id: string; text: string; byName: string; at: string }[];
   customerMessages: { id: string; direction: 'TO_CUSTOMER' | 'FROM_CUSTOMER'; text: string; byName?: string; at: string }[];
   linkedDuplicates: { id: string; referenceNo: string; status: string; receivedAt: string }[];
+  /** Work orders raised against this complaint (Phase 4). */
+  workOrders: { id: string; workOrderNo: string; title: string; status: string; statusLabel: string; statusTone: string; assignees: string[]; plannedVisitAt?: string | null; dueAt?: string | null }[];
   statusHistory: { from?: string; to: string; toLabel: string; action: string; byName?: string; at: string; reason?: string }[];
   availableActions: { action: string; label: string; to: string; requiresReason: boolean; confirm: boolean }[];
-  permissions: { canEdit: boolean; canClassify: boolean; canAddNote: boolean; canAttach: boolean; canRespond: boolean };
+  permissions: { canEdit: boolean; canClassify: boolean; canAddNote: boolean; canAttach: boolean; canRespond: boolean; canCreateWorkOrder: boolean };
   createdAt: string;
   updatedAt: string;
 }

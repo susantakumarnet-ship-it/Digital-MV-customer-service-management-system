@@ -18,6 +18,9 @@ import { ComplaintDetailPage } from '@/features/complaints/complaint-detail-page
 import { ComplaintsListPage } from '@/features/complaints/complaints-list-page';
 import { NewComplaintPage } from '@/features/complaints/new-complaint-page';
 import { PublicComplaintPage } from '@/features/complaints/public-complaint-page';
+import { AssignmentBoardPage } from '@/features/work-orders/assignment-board-page';
+import { WorkOrderDetailPage } from '@/features/work-orders/work-order-detail-page';
+import { WorkOrdersListPage } from '@/features/work-orders/work-orders-list-page';
 import { EmptyState } from '@/components/states';
 import { AppLayout } from './layout/app-layout';
 import { RouteError } from './route-error';
@@ -76,6 +79,30 @@ export const router = createBrowserRouter([
         element: (
           <RequirePermission all={['complaint.read']}>
             <ComplaintDetailPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'work-orders',
+        element: (
+          <RequirePermission all={['workOrder.read']}>
+            <WorkOrdersListPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'work-orders/board',
+        element: (
+          <RequirePermission all={['workOrder.assign']}>
+            <AssignmentBoardPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'work-orders/:id',
+        element: (
+          <RequirePermission all={['workOrder.read']}>
+            <WorkOrderDetailPage />
           </RequirePermission>
         ),
       },

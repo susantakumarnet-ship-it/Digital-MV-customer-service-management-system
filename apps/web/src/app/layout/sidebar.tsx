@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useAuth } from '@/features/auth/auth-context';
 import { BrandMark } from '@/features/auth/auth-layout';
@@ -8,6 +8,11 @@ import { visibleNav } from '../navigation';
 export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { hasAny } = useAuth();
   const groups = visibleNav(hasAny);
+  const { pathname } = useLocation();
+  const all = groups.flatMap((g) => g.items);
+  /** A parent link (e.g. /work-orders) is not highlighted when a more specific sibling (/work-orders/board) matches. */
+  const shadowed = (to: string) =>
+    all.some((o) => o.to !== to && o.to.startsWith(to + '/') && (pathname === o.to || pathname.startsWith(o.to + '/')));
   return (
     <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3">
       {groups.map((g, gi) => (
@@ -25,7 +30,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                   className={({ isActive }) =>
                     cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-royal-700 text-white' : 'text-navy-100 hover:bg-navy-800 hover:text-white',
+                      isActive && !shadowed(item.to) ? 'bg-royal-700 text-white' : 'text-navy-100 hover:bg-navy-800 hover:text-white',
                       collapsed && 'justify-center px-0',
                     )
                   }

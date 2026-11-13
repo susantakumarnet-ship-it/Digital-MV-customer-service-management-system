@@ -12,6 +12,7 @@ import { User } from '../modules/users/user.model';
 import { Attachment } from '../core/storage/attachment.model';
 import { IdempotencyKey } from '../core/idempotency/idempotency.service';
 import { Complaint } from '../modules/complaints/complaint.model';
+import { WorkOrder } from '../modules/work-orders/work-order.model';
 
 export const ALL_MODELS = [
   AuditLog,
@@ -27,4 +28,5 @@ export const ALL_MODELS = [
   Attachment,
   IdempotencyKey,
   Complaint,
+  WorkOrder,
 ];

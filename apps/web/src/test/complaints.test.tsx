@@ -153,9 +153,10 @@ function detail(overrides: Partial<ComplaintDetailDto> = {}): ComplaintDetailDto
     attachments: [],
     customerMessages: [],
     linkedDuplicates: [],
+    workOrders: [],
     statusHistory: [{ to: 'NEW', toLabel: 'New', action: 'submit', at: '2026-11-12T10:00:00.000Z' }],
     availableActions: [],
-    permissions: { canEdit: false, canClassify: false, canAddNote: false, canAttach: false, canRespond: false },
+    permissions: { canEdit: false, canClassify: false, canAddNote: false, canAttach: false, canRespond: false, canCreateWorkOrder: false },
     createdAt: '2026-11-12T10:00:00.000Z',
     updatedAt: '2026-11-12T10:00:00.000Z',
     ...overrides,
@@ -223,7 +224,7 @@ describe('complaint detail view', () => {
         <ComplaintDetailView
           complaint={detail({
             internalNotes: [{ id: 'n1', text: 'Called the site manager', byName: 'Sam', at: '2026-11-12T11:00:00.000Z' }],
-            permissions: { canEdit: false, canClassify: false, canAddNote: true, canAttach: false, canRespond: false },
+            permissions: { canEdit: false, canClassify: false, canAddNote: true, canAttach: false, canRespond: false, canCreateWorkOrder: false },
           })}
           onChanged={vi.fn()}
         />

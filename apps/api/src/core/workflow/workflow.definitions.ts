@@ -182,7 +182,7 @@ const complaint: WorkflowSeed = {
 const workOrder: WorkflowSeed = {
   entity: 'workOrder',
   name: 'Work order lifecycle',
-  version: 1,
+  version: 2,
   initialState: 'DRAFT',
   states: [
     s('DRAFT', 'Draft', 'neutral'),
@@ -200,6 +200,8 @@ const workOrder: WorkflowSeed = {
   transitions: [
     t({ action: 'assign', label: 'Assign', from: ['DRAFT'], to: 'ASSIGNED', permission: 'workOrder.assign', guards: ['hasAssignees'] }),
     t({ action: 'accept', label: 'Accept work', from: ['ASSIGNED'], to: 'ACCEPTED', permission: 'workOrder.accept', guards: ['actorIsAssignee'] }),
+    // v2: changing the engineers on accepted/scheduled work sends it back for acceptance.
+    sys({ action: 'reassign', label: 'Reassigned', from: ['ACCEPTED', 'SCHEDULED'], to: 'ASSIGNED', requiresReason: true }),
     t({
       action: 'schedule',
       label: 'Mark scheduled',

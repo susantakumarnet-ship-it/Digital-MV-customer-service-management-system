@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, EyeOff, Pencil } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, EyeOff, Pencil, Wrench } from 'lucide-react';
 import { COMPLAINT_SOURCES, type ComplaintDetailDto } from '@mv/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -22,6 +22,8 @@ import {
   StatusHistoryPanel,
 } from './complaint-panels';
 import { DueCell, PriorityBadge } from './complaints-list-page';
+import { ComplaintWorkOrdersPanel } from '@/features/work-orders/complaint-work-orders-panel';
+import { CreateWorkOrderDialog } from '@/features/work-orders/work-order-dialogs';
 
 export function ComplaintDetailPage() {
   const { id = '' } = useParams();
@@ -83,6 +85,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: ComplaintDetailDto; onChanged: (c: ComplaintDetailDto) => void }) {
   const { hasPermission } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
+  const [woOpen, setWoOpen] = useState(false);
   const isStaff = hasPermission('complaint.update');
   const sourceLabel = COMPLAINT_SOURCES.find((s) => s.value === c.source)?.label ?? c.source;
 
@@ -114,6 +117,11 @@ export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: Co
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {c.permissions.canCreateWorkOrder && (
+              <Button variant="secondary" size="sm" onClick={() => setWoOpen(true)}>
+                <Wrench className="h-4 w-4" /> Create work order
+              </Button>
+            )}
             {c.permissions.canEdit && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="h-4 w-4" /> Edit details
@@ -149,6 +157,7 @@ export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: Co
           </Card>
 
           {c.permissions.canClassify && <ClassificationPanel complaint={c} onChanged={onChanged} />}
+          <ComplaintWorkOrdersPanel complaint={c} onCreate={() => setWoOpen(true)} />
           <CustomerMessagesPanel complaint={c} onChanged={onChanged} />
           <AttachmentsPanel complaint={c} onChanged={onChanged} isStaff={isStaff} />
           <InternalNotesPanel complaint={c} onChanged={onChanged} />
@@ -207,6 +216,7 @@ export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: Co
         </div>
       </div>
 
+      {c.permissions.canCreateWorkOrder && <CreateWorkOrderDialog complaint={c} open={woOpen} onOpenChange={setWoOpen} />}
       {c.permissions.canEdit && <EditIntakeDialog complaint={c} open={editOpen} onOpenChange={setEditOpen} onChanged={onChanged} />}
     </div>
   );

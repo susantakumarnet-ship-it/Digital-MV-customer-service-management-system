@@ -40,4 +40,28 @@ export const MIGRATIONS: Migration[] = [
     },
     down: async () => undefined,
   },
+  {
+    id: '2026-11-13-003-work-orders',
+    description: 'Phase 4: workOrders collection/indexes; work-order workflow v2 (system "reassign" transition)',
+    up: async (db) => {
+      const { WorkOrder } = await import('../../modules/work-orders/work-order.model');
+      await WorkOrder.createCollection().catch(() => undefined);
+      await WorkOrder.createIndexes();
+      const { DEFAULT_WORKFLOWS } = await import('../../core/workflow/workflow.definitions');
+      const wo = DEFAULT_WORKFLOWS.find((w) => w.entity === 'workOrder')!;
+      const reassign = wo.transitions.find((t) => t.action === 'reassign')!;
+      // Add the transition only if missing; admin-edited labels/flags are preserved.
+      await db
+        .collection('workflowDefinitions')
+        .updateOne(
+          { entity: 'workOrder', 'transitions.action': { $ne: 'reassign' } },
+          { $push: { transitions: reassign }, $set: { version: wo.version, updatedAt: new Date() } } as never,
+        );
+    },
+    down: async (db) => {
+      await db
+        .collection('workflowDefinitions')
+        .updateOne({ entity: 'workOrder' }, { $pull: { transitions: { action: 'reassign' } }, $set: { version: 1 } } as never);
+    },
+  },
 ];
