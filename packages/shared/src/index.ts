@@ -14,3 +14,5 @@ export * from './schemas/visits';
 export * from './schemas/inspections';
 export * from './schemas/reviews';
 export * from './schemas/materials';
+export * from './schemas/ncr';
+export * from './schemas/acceptance';

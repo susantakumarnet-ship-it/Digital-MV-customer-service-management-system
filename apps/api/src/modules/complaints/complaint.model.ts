@@ -78,6 +78,14 @@ const complaintSchema = new Schema(
     dueAt: Date,
     resolvedAt: Date,
     closedAt: Date,
+    /** Phase 8: current customer-acceptance cycle (cleared on reopen; history in customerAcceptances). */
+    acceptance: {
+      status: { type: String, enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'WAIVED'] },
+      requestedAt: Date,
+      decidedAt: Date,
+      method: { type: String, enum: ['TOKEN', 'PORTAL', 'WAIVER'] },
+      recordId: ref('CustomerAcceptance'),
+    },
 
     // Duplicates (BR-003): originals are linked, never deleted.
     duplicateOfId: ref('Complaint'),

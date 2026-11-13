@@ -12,6 +12,7 @@ import { useWorkOrderSummary } from '@/features/work-orders/wo-lib';
 import { TeamWorkloadCard, WorkOrderCharts, WorkOrderKpiGrid } from './work-order-widgets';
 import { SupervisorFieldWidgets } from './field-widgets';
 import { MaterialKpiGrid, PendingMaterialApprovalsCard } from '@/features/materials/material-widgets';
+import { NcrKpiGrid } from '@/features/ncr/ncr-panels';
 
 function Upcoming({ items }: { items: { label: string; phase: number }[] }) {
   return (
@@ -85,7 +86,7 @@ export function SupervisorDashboard() {
           <PendingMaterialApprovalsCard />
         </section>
       )}
-      <Upcoming items={[{ label: 'Open NCRs and customer acceptance', phase: 8 }]} />
+      <NcrKpiGrid />
     </div>
   );
 }
@@ -120,7 +121,14 @@ export function CustomerDashboard() {
         viewAllLink="/complaints?tab=open"
         highlightAwaiting
       />
-      <Upcoming items={[{ label: 'Service acceptance and feedback', phase: 8 }]} />
+      <ComplaintMiniList
+        title="Waiting for your acceptance"
+        description="Work is complete — please confirm the service"
+        params={{ status: 'CUSTOMER_ACCEPTANCE_PENDING', sort: 'receivedAt' }}
+        emptyTitle="Nothing to confirm"
+        viewAllLink="/complaints?tab=open"
+        highlightAwaiting
+      />
     </div>
   );
 }

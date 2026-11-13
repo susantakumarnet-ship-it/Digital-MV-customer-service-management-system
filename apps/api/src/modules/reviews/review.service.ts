@@ -26,6 +26,7 @@ import { Priority } from '../masters/master.models';
 import { TimeEvent } from '../visits/visit.models';
 import { getVisit } from '../visits/visit.service';
 import { WorkOrder } from '../work-orders/work-order.model';
+import { Ncr } from '../ncr/ncr.model';
 import { ReviewAction } from './review.model';
 
 type Doc = Record<string, any>;
@@ -234,7 +235,14 @@ export async function reviewContext(auth: AuthContext, reportId: string): Promis
     revisions: revisions.map((r) => ({ id: String(r._id), revisionNo: r.revisionNo, status: r.status, statusLabel: label(rDef, r.status), submittedAt: r.submittedAt ?? null })),
     reviewHistory: history.map(actionDto),
     feedbackFromPreviousReview: feedbackSource ? actionDto(feedbackSource) : null,
-    ncrs: [], // Phase 8
+    ncrs: await (async () => {
+      const nDef = await getDefinition('ncr');
+      const rows = await Ncr.find({ $or: [{ workOrderId: raw.workOrderId }, { inspectionReportId: { $in: revisions.map((r) => r._id) } }] }).sort({ createdAt: 1 }).lean<Doc[]>();
+      return rows.map((n) => {
+        const st = nDef.states.find((x) => x.key === n.status);
+        return { id: String(n._id), ncrNo: n.ncrNo, status: n.status, statusLabel: st?.label ?? n.status, statusTone: st?.tone ?? 'neutral', title: n.title, severity: n.severity, itemKey: n.itemKey, inspectionReportId: n.inspectionReportId ? String(n.inspectionReportId) : undefined };
+      });
+    })(),
     approval: { levels: wf.inspectionApprovalLevels, approvalsSoFar: approvals.length, approvedBy: approvals.map((a) => a.reviewerName) },
     permissions: {
       canStartReview: raw.status === 'SUBMITTED' && can.has('inspection.approve') && !selfReason,

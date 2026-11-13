@@ -18,6 +18,7 @@ import { api, errorMessage, parseApiError } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { usePublicSettings } from '@/lib/queries';
 import { ChecklistItem } from './checklist-item';
+import { FailedItemsNcrCard } from '@/features/ncr/ncr-panels';
 import { groupBySection, initialValues, issueItemKey, useReportAutosave, type ItemValue, type SaveState } from './report-lib';
 
 export function InspectionReportPage() {
@@ -185,6 +186,8 @@ function ReportView({ report: initial }: { report: InspectionReportDto }) {
           </span>
         </div>
       )}
+
+      {report.locked && <FailedItemsNcrCard report={report} />}
 
       {groups.map((g) => (
         <section key={g.section} aria-labelledby={`sec-${g.section}`} className="space-y-3">

@@ -14,6 +14,7 @@ import { formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { formatWaiting, useReviewQueue, waitingTone } from './review-lib';
 import { QueueRowBadges } from './review-queue-page';
+import { NcrKpiGrid } from '@/features/ncr/ncr-panels';
 
 /** Reviewer dashboard (dashboard.reviewer): review KPIs, oldest pending reports and pending time corrections. */
 export function ReviewerDashboard() {
@@ -126,6 +127,7 @@ export function ReviewerDashboard() {
             )}
           </Card>
         </div>
+        <NcrKpiGrid />
       </div>
     </div>
   );

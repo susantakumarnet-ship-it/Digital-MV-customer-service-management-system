@@ -33,6 +33,10 @@ import { publicRouter } from './modules/complaints/public.routes';
 import { registerComplaintGuards } from './modules/complaints/complaint.guards';
 import { canAccessComplaint } from './modules/complaints/complaint.service';
 import { filesRouter, registerAttachmentOwner } from './modules/files/files.routes';
+import { ncrsRouter } from './modules/ncr/ncr.routes';
+import { canAccessNcr, registerNcrGuards } from './modules/ncr/ncr.service';
+import { complaintAcceptanceRouter, publicAcceptanceRouter } from './modules/acceptance/acceptance.routes';
+import { registerAcceptanceGuards, registerAcceptanceHooks } from './modules/acceptance/acceptance.service';
 
 export function createApp(): Express {
   const e = env();
@@ -44,6 +48,10 @@ export function createApp(): Express {
   registerInspectionGuards();
   registerReviewGuards();
   registerMaterialGuards();
+  registerNcrGuards();
+  registerAcceptanceGuards();
+  registerAcceptanceHooks();
+  registerAttachmentOwner('ncr', (auth, ownerId) => canAccessNcr(auth, ownerId));
   registerAttachmentOwner('stockTransaction', (auth, ownerId) => canAccessTransactionEvidence(auth, ownerId));
   registerAttachmentOwner('inspectionReport', (auth, ownerId) => canAccessReport(auth, ownerId));
   registerAttachmentOwner('complaint', (auth, ownerId, a) =>
@@ -136,6 +144,9 @@ export function createApp(): Express {
     reportReviewRouter,
     materialRequestsRouter,
     inventoryRouter,
+    ncrsRouter,
+    complaintAcceptanceRouter,
+    publicAcceptanceRouter,
   ];
   for (const r of routers) app.use(`/api/v1${r.base}`, r.router);
   // BRF §20 lists /api/v1/organizations as its own route: alias of /masters/organizations.

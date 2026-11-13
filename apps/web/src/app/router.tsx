@@ -34,6 +34,9 @@ import { ComparePage } from '@/features/reviews/compare-page';
 import { MaterialsListPage, StoreQueuePage } from '@/features/materials/materials-list-page';
 import { MaterialRequestPage } from '@/features/materials/material-request-page';
 import { InventoryPage, LedgerPage } from '@/features/materials/inventory-pages';
+import { NcrListPage } from '@/features/ncr/ncr-list-page';
+import { NcrDetailPage } from '@/features/ncr/ncr-detail-page';
+import { PublicAcceptancePage } from '@/features/acceptance/public-acceptance-page';
 import { EmptyState } from '@/components/states';
 import { AppLayout } from './layout/app-layout';
 import { RouteError } from './route-error';
@@ -42,6 +45,7 @@ export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/report', element: <PublicComplaintPage />, errorElement: <RouteError /> },
+  { path: '/acceptance/:token', element: <PublicAcceptancePage />, errorElement: <RouteError /> },
   { path: '/reset-password', element: <ResetPasswordPage mode="reset" /> },
   { path: '/activate', element: <ResetPasswordPage mode="activate" /> },
   {
@@ -172,6 +176,22 @@ export const router = createBrowserRouter([
         element: (
           <RequirePermission all={['inventory.read']}>
             <LedgerPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'ncrs',
+        element: (
+          <RequirePermission all={['ncr.read']}>
+            <NcrListPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'ncrs/:id',
+        element: (
+          <RequirePermission all={['ncr.read']}>
+            <NcrDetailPage />
           </RequirePermission>
         ),
       },

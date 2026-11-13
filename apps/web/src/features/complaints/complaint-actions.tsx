@@ -21,12 +21,13 @@ const DANGER = new Set(['reject', 'cancel', 'markDuplicate', 'reopen']);
  * Workflow action buttons rendered strictly from the server's `availableActions` (never hard-coded).
  * Actions requiring a reason collect one; confirm=true actions ask for confirmation.
  */
-export function ComplaintActions({ complaint, onChanged }: { complaint: ComplaintDetailDto; onChanged: (c: ComplaintDetailDto) => void }) {
+export function ComplaintActions({ complaint, onChanged, hide = [] }: { complaint: ComplaintDetailDto; onChanged: (c: ComplaintDetailDto) => void; hide?: string[] }) {
   const [active, setActive] = useState<Action | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState('');
 
-  if (!complaint.availableActions.length) return null;
+  const actions = complaint.availableActions.filter((a) => !hide.includes(a.action));
+  if (!actions.length) return null;
 
   const run = async (action: string, extra: { reason?: string; duplicateOfId?: string; messageToCustomer?: string } = {}) => {
     try {
@@ -58,7 +59,7 @@ export function ComplaintActions({ complaint, onChanged }: { complaint: Complain
   return (
     <>
       <div className="flex flex-wrap gap-2" aria-label="Workflow actions">
-        {complaint.availableActions.map((a) => (
+        {actions.map((a) => (
           <Button key={a.action} variant={DANGER.has(a.action) ? 'outline' : 'secondary'} size="sm" loading={busy === a.action} onClick={() => click(a)} className={cn(DANGER.has(a.action) && 'text-red-700')}>
             {a.label}
           </Button>

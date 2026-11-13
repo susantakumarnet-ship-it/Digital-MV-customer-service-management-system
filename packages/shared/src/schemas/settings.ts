@@ -65,6 +65,11 @@ export const settingsSchemas = {
     dueSoonHours: z.coerce.number().int().min(1).max(720),
     digestHourLocal: z.coerce.number().int().min(0).max(23),
   }),
+  ncr: z.object({
+    categories: z.array(z.string().trim().min(1).max(80)).min(1).max(50),
+    severities: z.array(z.string().trim().min(1).max(40)).min(1).max(10),
+    defaultDueDays: z.coerce.number().int().min(1).max(365),
+  }),
   publicForm: z.object({
     enabled: z.boolean(),
     privacyNoticeVersion: z.string().trim().min(1).max(20),
@@ -129,6 +134,11 @@ export const DEFAULT_SETTINGS: Settings = {
     whatsappEnabled: false,
     dueSoonHours: 24,
     digestHourLocal: 7,
+  },
+  ncr: {
+    categories: ['Workmanship', 'Material/Component defect', 'Design/Specification', 'Safety', 'Documentation', 'Supplier/Contractor', 'Customer-caused', 'Other'],
+    severities: ['Critical', 'Major', 'Minor', 'Observation'],
+    defaultDueDays: 14,
   },
   publicForm: {
     enabled: true,

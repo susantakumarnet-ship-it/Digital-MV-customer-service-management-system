@@ -86,6 +86,15 @@ const GROUPS: Record<SettingsGroup, GroupSpec> = {
       { path: 'repeatComplaintWindowDays', label: 'Repeat complaint window (days)', kind: 'number', help: 'Decision D-19.' },
     ],
   },
+  ncr: {
+    label: 'NCR',
+    description: 'Non-conformance report lists and default due period (decision D-08).',
+    fields: [
+      { path: 'categories', label: 'NCR categories', kind: 'tags', help: 'Press Enter to add. Existing NCRs keep their category.' },
+      { path: 'severities', label: 'NCR severities', kind: 'tags', help: 'Most severe first. Press Enter to add.' },
+      { path: 'defaultDueDays', label: 'Default due period (days)', kind: 'number' },
+    ],
+  },
   attachments: {
     label: 'Attachments',
     description: 'Upload limits enforced on the server (HO §7.1, decision D-20).',

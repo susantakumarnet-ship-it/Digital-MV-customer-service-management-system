@@ -80,7 +80,7 @@ export interface ReviewContextDto {
   reviewHistory: ReviewActionDto[];
   /** Review feedback that applies to this revision (from the review that returned the previous one). */
   feedbackFromPreviousReview?: ReviewActionDto | null;
-  ncrs: { id: string; ncrNo: string; status: string }[];
+  ncrs: { id: string; ncrNo: string; status: string; statusLabel: string; statusTone: string; title: string; severity: string; itemKey?: string; inspectionReportId?: string }[];
   approval: { levels: number; approvalsSoFar: number; approvedBy: string[] };
   permissions: { canStartReview: boolean; canApprove: boolean; canReturn: boolean; reasonIfNot?: string };
 }

@@ -24,6 +24,8 @@ import {
 import { DueCell, PriorityBadge } from './complaints-list-page';
 import { ComplaintWorkOrdersPanel } from '@/features/work-orders/complaint-work-orders-panel';
 import { CreateWorkOrderDialog } from '@/features/work-orders/work-order-dialogs';
+import { NcrListPanel } from '@/features/ncr/ncr-panels';
+import { PANEL_ACTIONS, ResolutionAcceptancePanel, useAcceptancePanelAccess } from '@/features/acceptance/acceptance-panel';
 
 export function ComplaintDetailPage() {
   const { id = '' } = useParams();
@@ -38,7 +40,7 @@ export function ComplaintDetailPage() {
     qc.setQueryData(['complaints', 'detail', id], c);
     void qc.invalidateQueries({ queryKey: ['complaints', 'list'] });
     void qc.invalidateQueries({ queryKey: ['complaints', 'summary'] });
-    void qc.invalidateQueries({ queryKey: ['complaints', id, 'activity'] });
+    void qc.invalidateQueries({ queryKey: ['complaints', id] });
   };
 
   if (q.isLoading) {
@@ -87,6 +89,7 @@ export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: Co
   const [editOpen, setEditOpen] = useState(false);
   const [woOpen, setWoOpen] = useState(false);
   const isStaff = hasPermission('complaint.update');
+  const acceptancePanel = useAcceptancePanelAccess(c);
   const sourceLabel = COMPLAINT_SOURCES.find((s) => s.value === c.source)?.label ?? c.source;
 
   return (
@@ -130,7 +133,7 @@ export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: Co
           </div>
         </div>
         <div className="mt-3">
-          <ComplaintActions complaint={c} onChanged={onChanged} />
+          <ComplaintActions complaint={c} onChanged={onChanged} hide={acceptancePanel.show ? PANEL_ACTIONS : []} />
         </div>
       </div>
 
@@ -156,8 +159,10 @@ export function ComplaintDetailView({ complaint: c, onChanged }: { complaint: Co
             </CardBody>
           </Card>
 
+          <ResolutionAcceptancePanel complaint={c} onChanged={onChanged} />
           {c.permissions.canClassify && <ClassificationPanel complaint={c} onChanged={onChanged} />}
           <ComplaintWorkOrdersPanel complaint={c} onCreate={() => setWoOpen(true)} />
+          <NcrListPanel context={{ complaintId: c.id, complaintRef: c.referenceNo, assetId: c.asset?.id }} filter={{ complaintId: c.id }} />
           <CustomerMessagesPanel complaint={c} onChanged={onChanged} />
           <AttachmentsPanel complaint={c} onChanged={onChanged} isStaff={isStaff} />
           <InternalNotesPanel complaint={c} onChanged={onChanged} />

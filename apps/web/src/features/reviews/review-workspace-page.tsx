@@ -25,6 +25,9 @@ import { api, errorMessage, parseApiError } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { ApproveDialog, ReturnDialog } from './review-dialogs';
+import { useAuth } from '@/features/auth/auth-context';
+import { severityTone } from '@/features/ncr/ncr-lib';
+import { RaiseNcrDialog, type RaiseNcrContext } from '@/features/ncr/raise-ncr-dialog';
 import { OUTCOME_MESSAGE, feedbackPayload, filterItems, useReviewContext, type ItemFilter, type ReviewActionResult } from './review-lib';
 
 const RESULT_TONE = { PASS: 'success', FAIL: 'danger', NOT_CHECKED: 'warning', NOT_APPLICABLE: 'neutral' } as const;
@@ -65,6 +68,18 @@ function Workspace({ ctx }: { ctx: ReviewContextDto }) {
   const [approveOpen, setApproveOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const { hasPermission } = useAuth();
+  const canRaiseNcr = hasPermission('ncr.create');
+  const [ncrContext, setNcrContext] = useState<RaiseNcrContext | null>(null);
+  const ncrContextFor = (itemKey?: string, itemDescription?: string): RaiseNcrContext => ({
+    complaintId: ctx.complaint.id,
+    complaintRef: ctx.complaint.referenceNo,
+    workOrderId: ctx.workOrder.id,
+    workOrderNo: ctx.workOrder.workOrderNo,
+    inspectionReportId: itemKey ? report.id : undefined,
+    itemKey,
+    itemDescription,
+  });
 
   const setItemFeedback = (key: string, comment: string) => setFeedback((f) => ({ ...f, [key]: comment }));
   const visible = useMemo(() => filterItems(report.items, filter, feedback), [report.items, filter, feedback]);
@@ -198,7 +213,15 @@ function Workspace({ ctx }: { ctx: ReviewContextDto }) {
                 {g.section}
               </h2>
               {g.items.map((item) => (
-                <ReviewItem key={item.key} item={item} canFeedback={perm.canReturn} feedback={feedback[item.key] ?? ''} onFeedback={(c) => setItemFeedback(item.key, c)} />
+                <ReviewItem
+                  key={item.key}
+                  item={item}
+                  canFeedback={perm.canReturn}
+                  feedback={feedback[item.key] ?? ''}
+                  onFeedback={(c) => setItemFeedback(item.key, c)}
+                  ncrs={ctx.ncrs.filter((n) => n.itemKey === item.key)}
+                  onRaiseNcr={canRaiseNcr ? () => setNcrContext(ncrContextFor(item.key, item.description)) : undefined}
+                />
               ))}
             </section>
           ))}
@@ -224,22 +247,7 @@ function Workspace({ ctx }: { ctx: ReviewContextDto }) {
           <ContextCard ctx={ctx} />
           <RevisionsCard ctx={ctx} />
           <HistoryCard history={ctx.reviewHistory} />
-          <Card>
-            <CardHeader title="Non-conformance reports" />
-            <CardBody className="text-sm text-slate-600">
-              {ctx.ncrs.length ? (
-                <ul className="space-y-1">
-                  {ctx.ncrs.map((n) => (
-                    <li key={n.id}>
-                      {n.ncrNo} · {n.status}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                'NCRs arrive in Phase 8.'
-              )}
-            </CardBody>
-          </Card>
+          <ReviewNcrsCard ctx={ctx} onRaise={() => setNcrContext(ncrContextFor())} />
         </div>
       </div>
 
@@ -252,6 +260,7 @@ function Workspace({ ctx }: { ctx: ReviewContextDto }) {
         onReturn={() => setReturnOpen(true)}
       />
 
+      {ncrContext && <RaiseNcrDialog open onOpenChange={(o) => !o && setNcrContext(null)} context={ncrContext} navigateOnCreate={false} />}
       <ApproveDialog
         open={approveOpen}
         onOpenChange={setApproveOpen}
@@ -321,7 +330,65 @@ export function ActionBar({
   );
 }
 
-function ReviewItem({ item, canFeedback, feedback, onFeedback }: { item: ReportItemDto; canFeedback: boolean; feedback: string; onFeedback: (c: string) => void }) {
+type ReviewNcr = ReviewContextDto['ncrs'][number];
+
+/** NCRs on this work order / report (NCR-01); failed items can raise one directly. */
+function ReviewNcrsCard({ ctx, onRaise }: { ctx: ReviewContextDto; onRaise: () => void }) {
+  const { hasPermission } = useAuth();
+  return (
+    <Card>
+      <CardHeader
+        title="Non-conformance reports"
+        actions={
+          hasPermission('ncr.create') ? (
+            <Button size="sm" variant="outline" onClick={onRaise}>
+              Raise NCR
+            </Button>
+          ) : undefined
+        }
+      />
+      <CardBody className="text-sm text-slate-600">
+        {ctx.ncrs.length ? (
+          <ul className="space-y-2">
+            {ctx.ncrs.map((n) => (
+              <li key={n.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span className="min-w-0">
+                  <Link to={`/ncrs/${n.id}`} className="font-mono font-medium text-royal-700 hover:underline">
+                    {n.ncrNo}
+                  </Link>{' '}
+                  <span className="text-slate-800">{n.title}</span>
+                  {n.itemKey && <span className="block text-xs text-slate-500">Item {n.itemKey}</span>}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Badge tone={severityTone(n.severity)}>{n.severity}</Badge>
+                  <StatusBadge status={n.status} label={n.statusLabel} tone={toneOf(n.statusTone)} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          'No NCRs raised for this work order.'
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+function ReviewItem({
+  item,
+  canFeedback,
+  feedback,
+  onFeedback,
+  ncrs = [],
+  onRaiseNcr,
+}: {
+  item: ReportItemDto;
+  canFeedback: boolean;
+  feedback: string;
+  onFeedback: (c: string) => void;
+  ncrs?: ReviewNcr[];
+  onRaiseNcr?: () => void;
+}) {
   const [open, setOpen] = useState(Boolean(feedback));
   const emphasis = item.result === 'FAIL' ? 'border-red-300 bg-red-50/30' : item.result === 'NOT_CHECKED' ? 'border-amber-300 bg-amber-50/30' : 'border-border bg-white';
   return (
@@ -354,6 +421,20 @@ function ReviewItem({ item, canFeedback, feedback, onFeedback }: { item: ReportI
         <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <span className="font-medium">Earlier reviewer feedback:</span> {item.feedback}
         </p>
+      )}
+      {(ncrs.length > 0 || (item.result === 'FAIL' && onRaiseNcr)) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          {ncrs.map((n) => (
+            <Link key={n.id} to={`/ncrs/${n.id}`} className="font-mono text-royal-700 hover:underline">
+              {n.ncrNo} ({n.statusLabel})
+            </Link>
+          ))}
+          {item.result === 'FAIL' && onRaiseNcr && (
+            <Button size="sm" variant="outline" onClick={onRaiseNcr}>
+              Raise NCR for this item
+            </Button>
+          )}
+        </div>
       )}
       {canFeedback && (
         <div className="mt-3">

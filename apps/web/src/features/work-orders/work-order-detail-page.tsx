@@ -17,6 +17,7 @@ import { cn, humanize } from '@/lib/utils';
 import { AssignDialog, PlanningDialog } from './work-order-dialogs';
 import { WorkOrderVisitsPanel } from '@/features/visits/visit-dialogs';
 import { WorkOrderMaterialsPanel } from '@/features/materials/material-panels';
+import { NcrListPanel } from '@/features/ncr/ncr-panels';
 
 type Action = WorkOrderDetailDto['availableActions'][number];
 const DANGER = new Set(['cancel']);
@@ -244,6 +245,7 @@ export function WorkOrderDetailView({ w, onChanged }: { w: WorkOrderDetailDto; o
           <WorkOrderVisitsPanel workOrder={w} />
 
           <WorkOrderMaterialsPanel workOrder={w} />
+          <NcrListPanel context={{ complaintId: w.complaint.id, complaintRef: w.complaint.referenceNo, workOrderId: w.id, workOrderNo: w.workOrderNo }} filter={{ workOrderId: w.id }} description="Raised against this work order" />
 
           <Card>
             <CardHeader title="Assignment history" description="Every assignment change is recorded (WO-04)." />

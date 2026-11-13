@@ -6,7 +6,6 @@ import {
   type ComplaintListQuery,
   type ComplaintSource,
 } from '@mv/shared';
-import { env } from '../../config/env';
 import type { AuthContext, RequestContext } from '../../common/context';
 import { escapeRegex } from '../../common/crypto';
 import { badRequest, conflict, forbidden, notFound, validationFailed } from '../../common/errors';
@@ -45,10 +44,6 @@ export async function canAccessComplaint(auth: AuthContext, id: string) {
   if (!auth.permissions.has('complaint.read')) return false;
   const c = await Complaint.findById(id).select('organizationId regionId siteId supervisorId createdBy').lean();
   return Boolean(c && inScope(auth, c, COMPLAINT_SCOPE));
-}
-
-function appUrl(path: string) {
-  return `${env().PUBLIC_APP_URL.replace(/\/$/, '')}${path}`;
 }
 
 // ---- Intake ----------------------------------------------------------------------------------------
@@ -365,10 +360,28 @@ export async function classifyComplaint(ctx: RequestContext, id: string, input: 
   return toDetail(saved.toObject(), auth);
 }
 
+/**
+ * Side effects owned by later modules (acceptance, closure, NCR) run inside the same transaction as
+ * the transition. Registered by name at startup so repeated app creation (tests) never duplicates.
+ */
+export interface ComplaintTransitionHookArgs {
+  ctx: RequestContext;
+  complaint: InstanceType<typeof Complaint>;
+  action: string;
+  from: string;
+  body: { action: string; reason?: string; extra?: Record<string, unknown> };
+  session: ClientSession;
+  afterCommit: (fn: () => unknown) => void;
+}
+const transitionHooks = new Map<string, (a: ComplaintTransitionHookArgs) => Promise<void>>();
+export function registerComplaintTransitionHook(name: string, fn: (a: ComplaintTransitionHookArgs) => Promise<void>) {
+  transitionHooks.set(name, fn);
+}
+
 export async function transitionComplaint(
   ctx: RequestContext,
   id: string,
-  body: { action: string; reason?: string; duplicateOfId?: string; messageToCustomer?: string },
+  body: { action: string; reason?: string; duplicateOfId?: string; messageToCustomer?: string; extra?: Record<string, unknown> },
 ) {
   const auth = ctx.auth!;
   const result = await withTransaction(async (session, afterCommit) => {
@@ -384,6 +397,7 @@ export async function transitionComplaint(
       session,
       entityRef: c.referenceNo,
     });
+    for (const hook of transitionHooks.values()) await hook({ ctx, complaint: c, action: body.action, from, body, session, afterCommit });
     const now = new Date();
     if (from === 'NEW' && !c.acknowledgedAt) c.acknowledgedAt = now;
 
@@ -431,8 +445,8 @@ export async function transitionComplaint(
   return toDetail(result.complaint.toObject(), auth);
 }
 
-async function customerEmail(c: Doc, subject: string, paragraphs: string[]) {
-  const mail = renderEmail({ title: subject, paragraphs: [`Dear ${c.customerName},`, ...paragraphs] });
+export async function customerEmail(c: Doc, subject: string, paragraphs: string[], action?: { label: string; url: string }) {
+  const mail = renderEmail({ title: subject, paragraphs: [`Dear ${c.customerName},`, ...paragraphs], action });
   await sendMail({ to: c.email, subject, ...mail });
 }
 

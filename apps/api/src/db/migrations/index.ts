@@ -99,4 +99,31 @@ export const MIGRATIONS: Migration[] = [
     },
     down: async () => undefined,
   },
+  {
+    id: '2026-11-13-007-ncr-acceptance',
+    description: 'Phase 8: ncrs, acceptanceTokens and customerAcceptances collections/indexes; complaint workflow v2 ("recordResolution")',
+    up: async (db) => {
+      const { Ncr } = await import('../../modules/ncr/ncr.model');
+      const { AcceptanceToken, CustomerAcceptance } = await import('../../modules/acceptance/acceptance.models');
+      for (const model of [Ncr, AcceptanceToken, CustomerAcceptance]) {
+        await model.createCollection().catch(() => undefined);
+        await model.createIndexes();
+      }
+      const { DEFAULT_WORKFLOWS } = await import('../../core/workflow/workflow.definitions');
+      const wf = DEFAULT_WORKFLOWS.find((w) => w.entity === 'complaint')!;
+      const t = wf.transitions.find((x) => x.action === 'recordResolution')!;
+      // Add only if missing; admin-edited labels/flags elsewhere are preserved.
+      await db
+        .collection('workflowDefinitions')
+        .updateOne(
+          { entity: 'complaint', 'transitions.action': { $ne: 'recordResolution' } },
+          { $push: { transitions: t }, $set: { version: wf.version, updatedAt: new Date() } } as never,
+        );
+    },
+    down: async (db) => {
+      await db
+        .collection('workflowDefinitions')
+        .updateOne({ entity: 'complaint' }, { $pull: { transitions: { action: 'recordResolution' } }, $set: { version: 1 } } as never);
+    },
+  },
 ];

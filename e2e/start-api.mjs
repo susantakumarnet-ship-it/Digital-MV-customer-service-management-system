@@ -1,3 +1,4 @@
+/* global process */
 // Starts the API for end-to-end tests against a fresh throwaway database (never the Atlas database).
 // Drops `mv_e2e`, runs migrations and the demo seed with known passwords, then starts the server.
 import { execSync, spawn } from 'node:child_process';

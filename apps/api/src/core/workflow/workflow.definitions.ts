@@ -43,7 +43,7 @@ export interface WorkflowSeed {
 const complaint: WorkflowSeed = {
   entity: 'complaint',
   name: 'Complaint lifecycle',
-  version: 1,
+  version: 2,
   initialState: 'NEW',
   states: [
     s('NEW', 'New', 'info'),
@@ -132,6 +132,18 @@ const complaint: WorkflowSeed = {
       to: 'RESOLVED',
       permission: 'complaint.resolve',
       guards: ['materialObligationsComplete', 'ncrObligationsComplete'],
+      confirm: true,
+    }),
+    // v2 (Phase 8, D-24): after the customer asked for further action, record how the concern was
+    // addressed when no new field work is needed. New work goes through startReview → work orders.
+    t({
+      action: 'recordResolution',
+      label: 'Record resolution',
+      from: ['REOPENED'],
+      to: 'RESOLVED',
+      permission: 'complaint.resolve',
+      requiresReason: true,
+      guards: ['resolutionAllowed', 'materialObligationsComplete', 'ncrObligationsComplete'],
       confirm: true,
     }),
     t({

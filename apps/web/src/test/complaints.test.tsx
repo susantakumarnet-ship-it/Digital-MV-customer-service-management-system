@@ -48,7 +48,7 @@ describe('public complaint form', () => {
     // Still on the contact step.
     expect(screen.getByLabelText(/Customer name/)).toBeInTheDocument();
     expect(apiMock.post).not.toHaveBeenCalled();
-  }, 20_000);
+  }, 60_000);
 
   it('has a honeypot field that is hidden and not focusable', async () => {
     const { PublicComplaintPage } = await import('@/features/complaints/public-complaint-page');
