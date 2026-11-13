@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bell, Boxes, SearchCheck, CalendarRange, ClipboardCheck, ClipboardList, Database, Wrench, FileClock, GitBranch, History, LayoutDashboard, ListChecks, MapPinned, Settings2, ShieldCheck, Users } from 'lucide-react';
+import { Bell, Boxes, SearchCheck, CalendarRange, ClipboardCheck, ClipboardList, Database, Wrench, FileClock, GitBranch, History, LayoutDashboard, ListChecks, MapPinned, Package, PackageSearch, Warehouse, Settings2, ShieldCheck, Users } from 'lucide-react';
 import type { PermissionKey } from '@mv/shared';
 
 export interface NavItem {
@@ -32,6 +32,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/reviews', label: 'Reviews', icon: SearchCheck, anyOf: ['inspection.approve', 'inspection.return'], badge: 'pendingReviews' },
       { to: '/time-corrections', label: 'Time corrections', icon: History, anyOf: ['visit.approveCorrection'], badge: 'pendingCorrections' },
       { to: '/inspections/temporary-assets', label: 'Temporary assets', icon: Boxes, anyOf: ['inspection.reviewTempAsset'] },
+      { to: '/materials', label: 'Material requests', icon: Package, anyOf: ['material.read'], engineerLabel: 'My material requests' },
+      { to: '/store', label: 'Store queue', icon: Warehouse, anyOf: ['inventory.issue'] },
+      { to: '/inventory', label: 'Inventory', icon: PackageSearch, anyOf: ['inventory.read'] },
       { to: '/notifications', label: 'Notifications', icon: Bell, anyOf: ['notification.read'] },
     ],
   },
@@ -84,5 +87,9 @@ export const SEGMENT_LABELS: Record<string, string> = {
   checklists: 'Checklist templates',
   reviews: 'Reviews',
   compare: 'Compare revisions',
+  materials: 'Material requests',
+  store: 'Store queue',
+  inventory: 'Inventory',
+  ledger: 'Stock ledger',
   new: 'New',
 };

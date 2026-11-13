@@ -26,6 +26,8 @@ import { registerInspectionGuards } from './modules/inspections/inspection.guard
 import { canAccessReport } from './modules/inspections/inspection.service';
 import { reportReviewRouter, reviewsRouter } from './modules/reviews/reviews.routes';
 import { registerReviewGuards } from './modules/reviews/review.service';
+import { inventoryRouter, materialRequestsRouter } from './modules/materials/materials.routes';
+import { canAccessTransactionEvidence, registerMaterialGuards } from './modules/materials/material.service';
 import { complaintsRouter } from './modules/complaints/complaints.routes';
 import { publicRouter } from './modules/complaints/public.routes';
 import { registerComplaintGuards } from './modules/complaints/complaint.guards';
@@ -41,6 +43,8 @@ export function createApp(): Express {
   registerWorkOrderGuards();
   registerInspectionGuards();
   registerReviewGuards();
+  registerMaterialGuards();
+  registerAttachmentOwner('stockTransaction', (auth, ownerId) => canAccessTransactionEvidence(auth, ownerId));
   registerAttachmentOwner('inspectionReport', (auth, ownerId) => canAccessReport(auth, ownerId));
   registerAttachmentOwner('complaint', (auth, ownerId, a) =>
     canAccessComplaint(auth, ownerId).then((ok) => ok && (a.context !== 'internal' || auth.permissions.has('complaint.readInternal'))),
@@ -130,6 +134,8 @@ export function createApp(): Express {
     inspectionReportsRouter,
     reviewsRouter,
     reportReviewRouter,
+    materialRequestsRouter,
+    inventoryRouter,
   ];
   for (const r of routers) app.use(`/api/v1${r.base}`, r.router);
   // BRF §20 lists /api/v1/organizations as its own route: alias of /masters/organizations.

@@ -7,7 +7,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { toast } from 'sonner';
 import type { Paged, WorkOrderSummaryDto } from '@mv/shared';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Badge, StatusBadge, toneOf } from '@/components/ui/badge';
+import { StatusBadge, toneOf } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { KpiCard } from '@/components/kpi-card';
 import { EmptyState, ErrorState } from '@/components/states';
@@ -262,21 +262,6 @@ export function EngineerDashboardWidgets() {
           All my work orders
         </Link>
       </div>
-      <Card>
-        <CardHeader title="Coming to this dashboard" />
-        <ul className="space-y-2 px-5 py-4">
-          {[
-            { label: 'Returned reports awaiting correction', phase: 6 },
-            { label: 'Material requests', phase: 7 },
-          ].map((u) => (
-            <li key={u.label} className="flex items-start gap-2 text-sm text-slate-700">
-              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" aria-hidden />
-              <span className="flex-1">{u.label}</span>
-              <Badge tone="neutral">Phase {u.phase}</Badge>
-            </li>
-          ))}
-        </ul>
-      </Card>
     </div>
   );
 }

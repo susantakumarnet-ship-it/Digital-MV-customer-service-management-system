@@ -22,7 +22,7 @@ The **Needed by** column is the latest phase that can proceed on the provisional
 | D-04 | What "MV" means, asset classes, mandatory identifiers, and whether *Asset* and *Equipment* are separate levels in the hierarchy. | MV means medium-voltage. Hierarchy is Region › City › Site › Asset, where each asset has an Equipment Type. The public form's "Equipment" dropdown is the equipment type, filtered by the selected asset. | P2 | Open |
 | D-05 | Master data (regions, cities, sites, assets, customers): source lists, owners and import format. | CSV/XLSX import templates are provided in P2. Demo data is used until real data arrives. **Real data is needed before UAT.** | P10 (UAT) | Open |
 | D-06 | Inspection checklists per equipment type, pass/fail criteria, and the report layout. | One sample template per seeded equipment type. Templates are fully **configurable** by admins. **Real checklists are needed before P5 sign-off.** | P5 | Open |
-| D-07 | Inventory scope: full stock accounting or request tracking only? Also units, number of warehouses, approval limits, opening balances, reorder levels, valuation. | Full ledger, multiple warehouses, receipt/opening-balance transactions, reorder threshold shown as a warning. **No valuation** (out of scope unless approved). | P7 | Open |
+| D-07 | Inventory scope: full stock accounting or request tracking only? Also units, number of warehouses, approval limits, opening balances, reorder levels, valuation. | **Full stock ledger:** immutable transactions, balances per warehouse, opening balances and receipts, reorder warnings, no valuation. **Several warehouses.** **Supervisor approves, with no quantity or value limits**, and never their own request. | P7 | Confirmed 2026-11-13 |
 | D-08 | NCR categories, severities, owners, required approvals and final status labels. | **Configurable** category and severity lists, and the BRF §15 lifecycle. A Reviewer/Quality Approver verifies. | P8 | Open |
 | D-09 | Notification providers: email service, and SMS/WhatsApp provider and budget. | SMTP adapter, with dev file transport. SMS and WhatsApp are **disabled adapters** behind configuration flags, and a Twilio adapter is written only if approved. | P9 | Open |
 | D-10 | Hosting provider, data residency, expected users and volumes, RPO/RTO, retention period. | Cloud-agnostic Docker images, S3-compatible storage, managed MongoDB replica set. Proposed RPO 24 h (daily backup plus PITR where available) and RTO 8 h. | P10 | Open |
@@ -75,6 +75,7 @@ These are tracked items found during delivery. Each must be closed, or explicitl
 |---|---|
 | 2026-11-12 | Register created in Phase 1. |
 | 2026-11-12 | D-02, D-03 and D-27 confirmed. The project owner accepted Phase 1. |
+| 2026-11-13 | Phase 7 accepted. D-07 confirmed (full stock ledger, several warehouses, supervisor approval with no limits).|
 | 2026-11-13 | Phase 6 accepted.|
 | 2026-11-13 | Phase 5 accepted. D-35 confirmed as built.|
 | 2026-11-13 | D-34 confirmed as built (multi-engineer visit status).|

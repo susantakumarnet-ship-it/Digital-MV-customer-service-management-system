@@ -31,6 +31,9 @@ import { TemporaryAssetsPage } from '@/features/inspections/temporary-assets-pag
 import { ReviewQueuePage } from '@/features/reviews/review-queue-page';
 import { ReviewWorkspacePage } from '@/features/reviews/review-workspace-page';
 import { ComparePage } from '@/features/reviews/compare-page';
+import { MaterialsListPage, StoreQueuePage } from '@/features/materials/materials-list-page';
+import { MaterialRequestPage } from '@/features/materials/material-request-page';
+import { InventoryPage, LedgerPage } from '@/features/materials/inventory-pages';
 import { EmptyState } from '@/components/states';
 import { AppLayout } from './layout/app-layout';
 import { RouteError } from './route-error';
@@ -129,6 +132,46 @@ export const router = createBrowserRouter([
         element: (
           <RequirePermission all={['visit.read']}>
             <VisitDetailPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'materials',
+        element: (
+          <RequirePermission all={['material.read']}>
+            <MaterialsListPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'materials/:id',
+        element: (
+          <RequirePermission all={['material.read']}>
+            <MaterialRequestPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'store',
+        element: (
+          <RequirePermission all={['inventory.issue']}>
+            <StoreQueuePage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'inventory',
+        element: (
+          <RequirePermission all={['inventory.read']}>
+            <InventoryPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'inventory/ledger',
+        element: (
+          <RequirePermission all={['inventory.read']}>
+            <LedgerPage />
           </RequirePermission>
         ),
       },

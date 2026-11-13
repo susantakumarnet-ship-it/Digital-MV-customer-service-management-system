@@ -18,6 +18,7 @@ import { api, errorMessage, parseApiError } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { CorrectionsList, DurationsGrid, MyTimeCard, TeamSequences, TimeEventsTable } from './time-tracking';
 import { InspectionCard } from './visit-dialogs';
+import { VisitMaterialsCard } from '@/features/materials/material-panels';
 import { useVisit } from './visit-lib';
 
 export function VisitDetailPage() {
@@ -138,6 +139,7 @@ function VisitDetailView({ v, onChanged, refetch }: { v: VisitDetailDto; onChang
         </div>
         <div className="space-y-4">
           <InspectionCard visit={v} />
+          <VisitMaterialsCard visit={v} />
           <Card>
             <CardHeader title="Visit details" />
             <CardBody>

@@ -16,6 +16,7 @@ import { WorkOrder } from '../modules/work-orders/work-order.model';
 import { TimeCorrection, TimeEvent, Visit } from '../modules/visits/visit.models';
 import { InspectionReport, InspectionTemplate } from '../modules/inspections/inspection.models';
 import { ReviewAction } from '../modules/reviews/review.model';
+import { MaterialRequest, StockBalance, StockTransaction } from '../modules/materials/material.models';
 
 export const ALL_MODELS = [
   AuditLog,
@@ -38,4 +39,7 @@ export const ALL_MODELS = [
   InspectionTemplate,
   InspectionReport,
   ReviewAction,
+  MaterialRequest,
+  StockTransaction,
+  StockBalance,
 ];

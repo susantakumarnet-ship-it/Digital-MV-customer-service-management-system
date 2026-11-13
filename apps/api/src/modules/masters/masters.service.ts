@@ -90,13 +90,14 @@ export async function masterOptions(key: MasterKey, q: { parentField?: string; p
   }
   const parentFields = [...def.refs.map((r) => r.field), ...(DERIVED[key] ?? [])];
   const rows = await Model.find(filter)
-    .select(['name', 'code', 'status', ...parentFields].join(' '))
+    .select(['name', 'code', 'status', ...parentFields, ...(key === 'inventoryItems' ? ['unit'] : [])].join(' '))
     .sort(key === 'priorities' ? { rank: 1 } : { name: 1 })
     .collation({ locale: 'en', strength: 2 })
     .limit(2000)
     .lean<Doc[]>();
   return rows.map((r) => {
     const o: Doc = { id: String(r._id), label: r.name, code: r.code, status: r.status };
+    if (r.unit) o.unit = r.unit;
     for (const f of parentFields) if (r[f]) o[f] = String(r[f]);
     return o;
   });

@@ -16,11 +16,11 @@ import { useComplaintSummary } from '@/features/complaints/complaint-lib';
 import { ComplaintCharts, ComplaintKpiGrid } from './complaint-widgets';
 import { useWorkOrderSummary } from '@/features/work-orders/wo-lib';
 import { WorkOrderCharts, WorkOrderKpiGrid } from './work-order-widgets';
+import { MaterialKpiGrid } from '@/features/materials/material-widgets';
 
 const CHART = { navy: '#0b1f4b', royal: '#1d4ed8', teal: '#0d9488', red: '#dc2626', grid: '#e2e8f0', axis: '#64748b' };
 
 const OPERATIONAL: { key: keyof AdminDashboardDto['operational']; label: string; phase: number }[] = [
-  { key: 'materialRequests', label: 'Material requests', phase: 7 },
   { key: 'ncrs', label: 'NCRs', phase: 8 },
 ];
 
@@ -75,6 +75,14 @@ export function AdminDashboard() {
               <WorkOrderCharts data={wo.data} loading={wo.isLoading} />
             </>
           )}
+        </section>
+      )}
+      {hasPermission('material.read') && (
+        <section className="mb-6 space-y-4" aria-labelledby="materials-heading">
+          <h2 id="materials-heading" className="text-base font-semibold text-navy-900">
+            Materials
+          </h2>
+          <MaterialKpiGrid keys={['pendingApproval', 'readyToIssue', 'partiallyIssued', 'criticalOpen']} />
         </section>
       )}
       {(canComplaints || canWorkOrders) && <h2 className="mb-4 text-base font-semibold text-navy-900">Platform</h2>}

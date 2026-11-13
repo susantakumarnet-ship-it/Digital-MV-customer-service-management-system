@@ -16,6 +16,7 @@ import { CustomerDashboard, ManagementDashboard, SupervisorDashboard } from './c
 import { EngineerDashboardWidgets } from './work-order-widgets';
 import { EngineerFieldWidgets, SupervisorFieldWidgets } from './field-widgets';
 import { ReviewerDashboard } from '@/features/reviews/reviewer-dashboard';
+import { MyMaterialRequestsCard, StoreDashboard } from '@/features/materials/material-widgets';
 
 interface RoleDashboardDef {
   permission: PermissionKey;
@@ -25,17 +26,7 @@ interface RoleDashboardDef {
 }
 
 /** Honest role dashboards for roles whose modules arrive in later phases: what exists today, and when each widget arrives. */
-const ROLE_DASHBOARDS: RoleDashboardDef[] = [
-  {
-    permission: 'dashboard.storekeeper',
-    title: 'Store dashboard',
-    intro: 'Issue and receive material against approved requests.',
-    upcoming: [
-      { label: 'Approved requests awaiting issue', phase: 7 },
-      { label: 'Stock levels, reorder warnings and ledger', phase: 7 },
-    ],
-  },
-];
+const ROLE_DASHBOARDS: RoleDashboardDef[] = [];
 
 export function DashboardPage() {
   const { hasPermission } = useAuth();
@@ -45,6 +36,7 @@ export function DashboardPage() {
   if (hasPermission('dashboard.customer')) return <CustomerDashboard />;
   if (hasPermission('dashboard.engineer')) return <EngineerDashboard />;
   if (hasPermission('dashboard.reviewer')) return <ReviewerDashboard />;
+  if (hasPermission('dashboard.storekeeper')) return <StoreDashboard />;
   const def = ROLE_DASHBOARDS.find((d) => hasPermission(d.permission));
   return <RoleDashboard def={def} />;
 }
@@ -56,6 +48,7 @@ function EngineerDashboard() {
       <div className="space-y-4">
         <EngineerFieldWidgets />
         <EngineerDashboardWidgets />
+        <MyMaterialRequestsCard />
       </div>
     </div>
   );

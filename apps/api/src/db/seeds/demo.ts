@@ -199,6 +199,25 @@ export async function seedDemo(log: Log, demoPassword: string) {
     log(`  + ${samples.length} complaints`);
   }
 
+  log('Demo opening stock…');
+  const { StockBalance, StockTransaction } = await import('../../modules/materials/material.models');
+  if (!(await StockTransaction.exists({}))) {
+    const admin = await User.findOne({}).sort({ createdAt: 1 }).lean<Doc>();
+    const whs = await Warehouse.find({ code: { $in: ['WH-CEN', 'WH-NTH'] } }).lean<Doc[]>();
+    const items = await InventoryItem.find({}).lean<Doc[]>();
+    const qtyFor = (unit: string, wh: string) => (unit === 'M' ? (wh === 'WH-CEN' ? 500 : 150) : unit === 'L' ? 200 : wh === 'WH-CEN' ? 20 : 6);
+    for (const wh of whs) {
+      for (const it of items) {
+        const quantity = qtyFor(it.unit, wh.code);
+        // Opening balances are recorded as ledger entries so balances always reconcile with the ledger.
+        await StockTransaction.create({ itemId: it._id, warehouseId: wh._id, transactionType: 'OPENING', quantity, referenceType: 'receipt', referenceLabel: 'Demo opening balance', actorId: admin!._id, actorName: 'Demo seed', transactionAt: new Date() });
+        await StockBalance.updateOne({ itemId: it._id, warehouseId: wh._id }, { $inc: { onHand: quantity } }, { upsert: true });
+      }
+    }
+    await InventoryItem.updateMany({ reorderLevel: { $exists: false } }, { $set: { reorderLevel: 5 } });
+    log(`  + opening stock for ${items.length} items in ${whs.length} warehouses`);
+  }
+
   log('Demo users…');
   const roleByKey = new Map((await Role.find({ isSystem: true }).lean()).map((r) => [r.key, r._id]));
   const hash = await hashPassword(demoPassword);

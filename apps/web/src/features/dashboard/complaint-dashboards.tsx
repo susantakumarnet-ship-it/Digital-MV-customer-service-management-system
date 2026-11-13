@@ -11,6 +11,7 @@ import { ComplaintCharts, ComplaintKpiGrid, ComplaintMiniList } from './complain
 import { useWorkOrderSummary } from '@/features/work-orders/wo-lib';
 import { TeamWorkloadCard, WorkOrderCharts, WorkOrderKpiGrid } from './work-order-widgets';
 import { SupervisorFieldWidgets } from './field-widgets';
+import { MaterialKpiGrid, PendingMaterialApprovalsCard } from '@/features/materials/material-widgets';
 
 function Upcoming({ items }: { items: { label: string; phase: number }[] }) {
   return (
@@ -75,12 +76,16 @@ export function SupervisorDashboard() {
         </section>
       )}
       <SupervisorFieldWidgets />
-      <Upcoming
-        items={[
-          { label: 'Pending material requests for approval', phase: 7 },
-          { label: 'Open NCRs and customer acceptance', phase: 8 },
-        ]}
-      />
+      {hasPermission('material.approve') && (
+        <section className="space-y-4" aria-labelledby="materials-heading">
+          <h2 id="materials-heading" className="text-base font-semibold text-navy-900">
+            Materials
+          </h2>
+          <MaterialKpiGrid keys={['pendingApproval', 'clarification', 'readyToIssue', 'criticalOpen']} />
+          <PendingMaterialApprovalsCard />
+        </section>
+      )}
+      <Upcoming items={[{ label: 'Open NCRs and customer acceptance', phase: 8 }]} />
     </div>
   );
 }

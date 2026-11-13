@@ -87,4 +87,16 @@ export const MIGRATIONS: Migration[] = [
     },
     down: async () => undefined,
   },
+  {
+    id: '2026-11-13-006-materials-inventory',
+    description: 'Phase 7: materialRequests, stockTransactions (ledger) and stockBalances collections and indexes',
+    up: async () => {
+      const { MaterialRequest, StockTransaction, StockBalance } = await import('../../modules/materials/material.models');
+      for (const model of [MaterialRequest, StockTransaction, StockBalance]) {
+        await model.createCollection().catch(() => undefined);
+        await model.createIndexes();
+      }
+    },
+    down: async () => undefined,
+  },
 ];
