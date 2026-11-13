@@ -121,6 +121,8 @@ export interface ReportItemDto extends TemplateItem {
   attachments: AttachmentDto[];
   /** Problems that would block submission for this item (computed by the server). */
   issues: string[];
+  /** Reviewer feedback from the review that returned the previous revision. */
+  feedback?: string;
 }
 
 export interface InspectionReportDto {
@@ -147,6 +149,8 @@ export interface InspectionReportDto {
   submittedByName?: string;
   createdByName?: string;
   previousRevisionId?: string | null;
+  /** When this revision exists because the previous one was returned (REV-02). */
+  reviewFeedback?: { reviewerName: string; comments?: string; at: string } | null;
   permissions: { canEdit: boolean; canSubmit: boolean; canUpload: boolean };
   updatedAt: string;
 }

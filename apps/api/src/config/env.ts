@@ -41,6 +41,8 @@ const envSchema = z
     SEED_DEMO_PASSWORD: z.string().optional(),
 
     API_DOCS_ENABLED: bool,
+    /** Sign-in attempts allowed per IP per 15 minutes (SEC-03). Keep the default in production. */
+    LOGIN_RATE_LIMIT_PER_15_MIN: z.coerce.number().int().min(5).max(10_000).default(20),
 
     // Private file storage (SEC-05). local = private folder outside the web root (dev/UAT);
     // s3 = any S3-compatible bucket (AWS S3, MinIO, Cloudflare R2, Azure via gateway…).

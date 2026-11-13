@@ -53,7 +53,8 @@ export async function loadWorkOrderInScope(auth: AuthContext, id: string, sessio
 
 /** Engineers are users holding workOrder.accept (default: Field Engineer / Technician role). */
 async function engineerRoleIds() {
-  return (await Role.find({ status: 'ACTIVE', permissions: 'workOrder.accept' }).select('_id').lean()).map((r) => r._id);
+  // Administrators hold every permission (incl. workOrder.accept) but are not field staff — exclude that role.
+  return (await Role.find({ status: 'ACTIVE', permissions: 'workOrder.accept', key: { $ne: 'ADMIN' } }).select('_id').lean()).map((r) => r._id);
 }
 
 async function validateEngineers(ids: string[], session?: ClientSession) {

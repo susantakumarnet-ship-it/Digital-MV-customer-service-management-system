@@ -28,6 +28,9 @@ import { InspectionReportPage } from '@/features/inspections/inspection-report-p
 import { InspectionReportsListPage } from '@/features/inspections/inspection-reports-list-page';
 import { TemplatesPage } from '@/features/inspections/templates-page';
 import { TemporaryAssetsPage } from '@/features/inspections/temporary-assets-page';
+import { ReviewQueuePage } from '@/features/reviews/review-queue-page';
+import { ReviewWorkspacePage } from '@/features/reviews/review-workspace-page';
+import { ComparePage } from '@/features/reviews/compare-page';
 import { EmptyState } from '@/components/states';
 import { AppLayout } from './layout/app-layout';
 import { RouteError } from './route-error';
@@ -150,6 +153,30 @@ export const router = createBrowserRouter([
         element: (
           <RequirePermission all={['inspection.read']}>
             <InspectionReportPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'inspection-reports/:id/compare',
+        element: (
+          <RequirePermission all={['inspection.read']}>
+            <ComparePage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'reviews',
+        element: (
+          <RequirePermission any={['inspection.approve', 'inspection.return']}>
+            <ReviewQueuePage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'reviews/:id',
+        element: (
+          <RequirePermission all={['inspection.read']}>
+            <ReviewWorkspacePage />
           </RequirePermission>
         ),
       },

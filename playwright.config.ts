@@ -26,13 +26,14 @@ export default defineConfig({
   webServer: [
     {
       command: 'node e2e/start-api.mjs',
-      url: 'http://localhost:4610/api/v1/health/ready',
+      url: 'http://localhost:4710/api/v1/health/ready',
       timeout: 180_000,
       reuseExistingServer: false,
     },
     {
       // Production build, as shipped.
       command: 'npm run build -w @mv/web && npm run preview -w @mv/web',
+      env: { API_PROXY_TARGET: 'http://localhost:4710' },
       url: 'http://localhost:5611',
       timeout: 240_000,
       reuseExistingServer: false,

@@ -36,6 +36,10 @@ export const settingsSchemas = {
     acceptanceTokenValidityDays: z.coerce.number().int().min(1).max(60),
     duplicateLookbackDays: z.coerce.number().int().min(1).max(365),
     repeatComplaintWindowDays: z.coerce.number().int().min(1).max(365),
+    // REV-05 time-log warning thresholds (minutes).
+    timeFlagMaxTravelMinutes: z.coerce.number().int().min(10).max(1440),
+    timeFlagMaxWorkMinutes: z.coerce.number().int().min(30).max(2880),
+    timeFlagMinWorkMinutes: z.coerce.number().int().min(0).max(120),
   }),
   attachments: z.object({
     allowedExtensions: z
@@ -101,6 +105,9 @@ export const DEFAULT_SETTINGS: Settings = {
     acceptanceTokenValidityDays: 7,
     duplicateLookbackDays: 30,
     repeatComplaintWindowDays: 30,
+    timeFlagMaxTravelMinutes: 240,
+    timeFlagMaxWorkMinutes: 720,
+    timeFlagMinWorkMinutes: 5,
   },
   attachments: {
     allowedExtensions: ['jpg', 'jpeg', 'png', 'heic', 'pdf', 'docx', 'xlsx'],

@@ -84,8 +84,11 @@ export function EngineerFieldWidgets() {
   const today = startOfDay(new Date());
   const visits = useVisits({ mine: 'true', from: today.toISOString(), to: endOfDay(addDays(today, 7)).toISOString(), limit: 50, sort: 'plannedAt' }, hasPermission('visit.read'));
   const active = useVisits({ mine: 'true', status: ACTIVE_VISIT_STATUSES.join(','), limit: 5 }, hasPermission('visit.read'));
-  const drafts = useReports({ status: 'DRAFT', limit: 10 }, hasPermission('inspection.read'));
-  const returned = useReports({ status: 'RETURNED', limit: 10 }, hasPermission('inspection.read'));
+  const drafts = useReports({ status: 'DRAFT', limit: 50 }, hasPermission('inspection.read'));
+  // A returned report continues as a new DRAFT revision (revision > 1) for the engineers.
+  const draftRows = drafts.data?.data ?? [];
+  const returnedRows = draftRows.filter((r) => r.revisionNo > 1);
+  const newDrafts = draftRows.filter((r) => r.revisionNo === 1);
   const corrections = useCorrections({ status: 'PENDING', mine: 'true', limit: 10 }, hasPermission('visit.requestCorrection'));
 
   const rows = (visits.data?.data ?? []).filter((v) => v.status !== 'CANCELLED');
@@ -115,8 +118,8 @@ export function EngineerFieldWidgets() {
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Visits today" value={todays.length} loading={visits.isLoading} accent="teal" icon={<MapPinned className="h-5 w-5" />} />
-        <KpiCard label="Draft reports" value={drafts.data?.meta.total ?? 0} loading={drafts.isLoading} accent="royal" icon={<ClipboardCheck className="h-5 w-5" />} />
-        <KpiCard label="Returned reports" value={returned.data?.meta.total ?? 0} loading={returned.isLoading} accent={returned.data?.meta.total ? 'red' : 'slate'} icon={<FileWarning className="h-5 w-5" />} />
+        <KpiCard label="Draft reports" value={newDrafts.length} loading={drafts.isLoading} accent="royal" icon={<ClipboardCheck className="h-5 w-5" />} />
+        <KpiCard label="Returned for correction" value={returnedRows.length} loading={drafts.isLoading} accent={returnedRows.length ? 'red' : 'slate'} icon={<FileWarning className="h-5 w-5" />} />
         <KpiCard label="Pending corrections" value={corrections.data?.meta.total ?? 0} loading={corrections.isLoading} accent="amber" icon={<History className="h-5 w-5" />} />
       </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -124,8 +127,8 @@ export function EngineerFieldWidgets() {
         <VisitList title="Upcoming visits" description="Next 7 days" rows={upcoming} loading={visits.isLoading} empty="No visits planned in the next 7 days" />
       </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <ReportList title="Draft inspection reports" rows={drafts.data?.data ?? []} loading={drafts.isLoading} empty="No draft reports" />
-        <ReportList title="Returned reports" rows={returned.data?.data ?? []} loading={returned.isLoading} empty="No returned reports" tone="danger" />
+        <ReportList title="Draft inspection reports" rows={newDrafts} loading={drafts.isLoading} empty="No draft reports" />
+        <ReportList title="Returned for correction" rows={returnedRows} loading={drafts.isLoading} empty="No returned reports" tone="danger" />
       </div>
       {(corrections.data?.meta.total ?? 0) > 0 && (
         <Card>
@@ -175,7 +178,7 @@ export function SupervisorFieldWidgets() {
           </Link>
         )}
         {hasPermission('inspection.read') && (
-          <Link to="/inspection-reports?tab=submitted" className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-600">
+          <Link to={hasPermission('inspection.approve') ? '/reviews' : '/inspection-reports?tab=submitted'} className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-600">
             <KpiCard label="Reports awaiting review" value={submitted.data?.meta.total ?? 0} loading={submitted.isLoading} accent="royal" icon={<ClipboardCheck className="h-5 w-5" />} />
           </Link>
         )}

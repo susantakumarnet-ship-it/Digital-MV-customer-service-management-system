@@ -47,7 +47,8 @@ function assertCsrf(req: Request) {
   if (!cookie || !header || !safeEqual(String(cookie), header)) throw forbidden('Security check failed. Please sign in again.', 'CSRF_FAILED');
 }
 
-const loginLimiter = limiter({ windowMs: 15 * 60_000, limit: 20 });
+// Per-IP sign-in limit per 15 minutes (SEC-03). Configurable so automated test suites can raise it.
+const loginLimiter = limiter({ windowMs: 15 * 60_000, limit: () => env().LOGIN_RATE_LIMIT_PER_15_MIN });
 const sensitiveLimiter = limiter({ windowMs: 60 * 60_000, limit: 10 });
 
 export const authRouter = new ApiRouter('/auth', 'Authentication');

@@ -9,13 +9,15 @@ const apiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../ap
 const env = {
   ...process.env,
   NODE_ENV: 'development',
-  PORT: '4610',
+  PORT: '4710', // separate from the dev instance (4610) so both can run side by side
   MONGODB_URI: process.env.MONGODB_URI_TEST ?? 'mongodb://127.0.0.1:27017/?replicaSet=rs0',
   MONGODB_DB: 'mv_e2e',
   SEED_ADMIN_EMAIL: 'admin@e2e.local',
   SEED_ADMIN_PASSWORD: 'E2e-Admin-Passw0rd',
   SEED_DEMO_PASSWORD: 'E2e-Demo-Passw0rd',
   MAIL_TRANSPORT: 'none',
+  // The suite signs in far more often than a real user; the production default (20) stays unchanged.
+  LOGIN_RATE_LIMIT_PER_15_MIN: '1000',
   LOG_LEVEL: 'warn',
   // Fresh secrets per run: apps/api/.env is deliberately NOT loaded, so tests can never reach Atlas.
   JWT_ACCESS_SECRET: randomBytes(48).toString('base64url'),

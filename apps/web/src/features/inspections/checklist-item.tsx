@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, Camera, FileText, Paperclip, Trash2 } from 'lucide-react';
+import { AlertCircle, Camera, FileText, MessageSquareWarning, Paperclip, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EVIDENCE_REQUIREMENTS, INSPECTION_RESULTS, INSPECTION_RESULT_LABELS, type AttachmentDto, type InspectionReportDto, type InspectionResult, type ReportItemDto } from '@mv/shared';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ export function ChecklistItem({ item, value, onChange, onBlur, readOnly, reportI
   const groupId = useId();
   const needReason = reasonRequired(item, value.result);
   return (
-    <div id={`item-${item.key}`} className={cn('scroll-mt-24 rounded-xl border bg-white p-4', item.issues.length && !readOnly ? 'border-amber-300' : 'border-border')}>
+    <div id={`item-${item.key}`} className={cn('scroll-mt-24 rounded-xl border bg-white p-4', (item.issues.length && !readOnly) || item.feedback ? 'border-amber-300' : 'border-border')}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="font-medium text-navy-900" id={`${groupId}-label`}>
@@ -55,6 +55,14 @@ export function ChecklistItem({ item, value, onChange, onBlur, readOnly, reportI
           {item.evidenceOnFail && <Badge tone="warning">Evidence if failed</Badge>}
         </div>
       </div>
+      {item.feedback && (
+        <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900" data-testid={`feedback-${item.key}`}>
+          <MessageSquareWarning className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            <span className="font-medium">Reviewer feedback:</span> {item.feedback}
+          </span>
+        </p>
+      )}
       {item.guidance && (
         <details className="mt-2 text-sm">
           <summary className="cursor-pointer text-royal-700">Guidance</summary>
@@ -112,7 +120,8 @@ export function ChecklistItem({ item, value, onChange, onBlur, readOnly, reportI
   );
 }
 
-function Thumb({ a }: { a: AttachmentDto }) {
+/** Evidence thumbnail: images preview via a short-lived signed URL; click opens full size / downloads. */
+export function Thumb({ a }: { a: AttachmentDto }) {
   const isImage = a.mimeType.startsWith('image/') && a.mimeType !== 'image/heic' && a.mimeType !== 'image/heif';
   const q = useQuery({
     queryKey: ['file-url', a.id],

@@ -18,7 +18,7 @@ let workOrderId = '';
 let visitUrl = '';
 
 async function apiAs(identifier: string): Promise<{ ctx: APIRequestContext; token: string }> {
-  const ctx = await pwRequest.newContext({ baseURL: 'http://localhost:4610' });
+  const ctx = await pwRequest.newContext({ baseURL: 'http://localhost:4710' });
   const r = await ctx.post('/api/v1/auth/login', { data: { identifier, password: DEMO_PASSWORD } });
   expect(r.ok()).toBeTruthy();
   return { ctx, token: (await r.json()).accessToken };

@@ -4,7 +4,7 @@ Web-based complaint and field-service management: complaint intake → review �
 
 **Stack:** React 18 + TypeScript + Tailwind (apps/web) · Node.js + Express 5 + TypeScript (apps/api) · MongoDB (replica set) via Mongoose · shared Zod schemas and permission catalogue (packages/shared).
 
-**Delivery status:** Phase 5 (site visits, six-step time tracking, inspections) complete — see [docs/phase-5/phase-5-report.md](docs/phase-5/phase-5-report.md). Earlier phases: [Phase 4](docs/phase-4/phase-4-report.md), [Phase 3](docs/phase-3/phase-3-report.md), [Phase 2](docs/phase-2/phase-2-report.md). Requirements, architecture and open decisions are in [docs/phase-1](docs/phase-1/).
+**Delivery status:** Phase 6 (review, approval, report versioning) complete — see [docs/phase-6/phase-6-report.md](docs/phase-6/phase-6-report.md). Earlier phases: [Phase 5](docs/phase-5/phase-5-report.md), [Phase 4](docs/phase-4/phase-4-report.md), [Phase 3](docs/phase-3/phase-3-report.md), [Phase 2](docs/phase-2/phase-2-report.md). Requirements, architecture and open decisions are in [docs/phase-1](docs/phase-1/).
 
 ## Prerequisites
 

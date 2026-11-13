@@ -2,7 +2,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Paged } from '@mv/shared';
 import { Card } from '@/components/ui/card';
-import { StatusBadge, toneOf } from '@/components/ui/badge';
+import { Badge, StatusBadge, toneOf } from '@/components/ui/badge';
+import { useAuth } from '@/features/auth/auth-context';
 import { DataTable, type Column } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
 import { api } from '@/lib/api';
@@ -43,7 +44,11 @@ const TABS = [
   { key: 'approved', label: 'Approved', status: 'APPROVED' },
 ] as const;
 
+const PENDING_REVIEW = ['SUBMITTED', 'UNDER_REVIEW'];
+
 export function InspectionReportsListPage() {
+  const { hasPermission } = useAuth();
+  const canReview = hasPermission('inspection.approve') || hasPermission('inspection.return');
   const [sp, setSp] = useSearchParams();
   const tab = TABS.find((t) => t.key === sp.get('tab')) ?? TABS[0];
   const page = Number(sp.get('page') ?? 1) || 1;
@@ -61,9 +66,17 @@ export function InspectionReportsListPage() {
       key: 'report',
       header: 'Report',
       cell: (r) => (
-        <Link to={`/inspection-reports/${r.id}`} className="font-medium text-royal-700 hover:underline">
-          {r.visit.visitNo} · rev {r.revisionNo}
-        </Link>
+        <div className="text-sm">
+          <Link to={canReview && PENDING_REVIEW.includes(r.status) ? `/reviews/${r.id}` : `/inspection-reports/${r.id}`} className="font-medium text-royal-700 hover:underline">
+            {r.visit.visitNo} · rev {r.revisionNo}
+          </Link>
+          {r.revisionNo > 1 && (
+            <Badge tone="info" className="ml-1.5">
+              {r.status === 'DRAFT' ? 'returned · correcting' : 'resubmitted'}
+            </Badge>
+          )}
+          {canReview && PENDING_REVIEW.includes(r.status) && <span className="block text-xs text-slate-500">Opens the review workspace</span>}
+        </div>
       ),
     },
     {

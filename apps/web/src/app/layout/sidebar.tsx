@@ -4,12 +4,14 @@ import { useAuth } from '@/features/auth/auth-context';
 import { BrandMark } from '@/features/auth/auth-layout';
 import { cn } from '@/lib/utils';
 import { useCorrections } from '@/features/visits/visit-lib';
+import { useReviewQueue } from '@/features/reviews/review-lib';
 import { visibleNav, type NavItem } from '../navigation';
 
 /** Live count badge on a nav item (only queried for users who can see the item). */
 function NavBadge({ kind, collapsed }: { kind: NonNullable<NavItem['badge']>; collapsed: boolean }) {
-  const q = useCorrections({ status: 'PENDING', limit: 1 }, kind === 'pendingCorrections');
-  const n = q.data?.meta.total ?? 0;
+  const corrections = useCorrections({ status: 'PENDING', limit: 1 }, kind === 'pendingCorrections');
+  const reviews = useReviewQueue({ status: 'PENDING', limit: 1 }, kind === 'pendingReviews');
+  const n = (kind === 'pendingReviews' ? reviews.data?.meta.total : corrections.data?.meta.total) ?? 0;
   if (!n) return null;
   return (
     <span

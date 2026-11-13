@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRevisions } from '@/features/reviews/review-lib';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, CheckCircle2, CloudOff, Eye, Loader2, Lock, Save, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, CloudOff, Eye, GitCompare, History, Loader2, Lock, MessageSquareWarning, Save, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type { InspectionReportDto } from '@mv/shared';
 import { Button } from '@/components/ui/button';
@@ -165,9 +167,14 @@ function ReportView({ report: initial }: { report: InspectionReportDto }) {
               {report.equipmentType && <span>· {report.equipmentType.name}</span>}
             </div>
           </div>
-          {!readOnly && <SaveIndicator state={autosave.state} onRetry={() => void autosave.flush()} />}
+          <div className="flex flex-col items-end gap-2">
+            {!readOnly && <SaveIndicator state={autosave.state} onRetry={() => void autosave.flush()} />}
+            <RevisionsMenu reportId={report.id} currentRevision={report.revisionNo} />
+          </div>
         </div>
       </div>
+
+      {report.reviewFeedback && <ReturnedBanner report={report} />}
 
       {report.locked && (
         <div className="flex items-start gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -342,5 +349,53 @@ export function ReportPreview({ report, onGoTo }: { report: InspectionReportDto;
         </div>
       )}
     </div>
+  );
+}
+
+/** Shown on a revision created by a reviewer's return (REV-02). */
+export function ReturnedBanner({ report }: { report: InspectionReportDto }) {
+  const fb = report.reviewFeedback!;
+  return (
+    <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="note" data-testid="returned-banner">
+      <p className="flex items-start gap-2 font-medium">
+        <MessageSquareWarning className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <span>
+          Returned for correction by {fb.reviewerName} on {formatDateTime(fb.at)}
+          {fb.comments ? `: ${fb.comments}` : ''}
+        </span>
+      </p>
+      <p className="mt-1 pl-6 text-amber-800">Items with reviewer feedback are highlighted below. Correct them and submit this revision again.</p>
+      {report.previousRevisionId && (
+        <Link to={`/inspection-reports/${report.id}/compare?with=${report.previousRevisionId}`} className="mt-2 inline-flex items-center gap-1 pl-6 font-medium underline">
+          <GitCompare className="h-4 w-4" aria-hidden /> Compare with previous revision
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** Revision switcher (only shown when more than one revision exists). */
+function RevisionsMenu({ reportId, currentRevision }: { reportId: string; currentRevision: number }) {
+  const q = useRevisions(reportId);
+  const rows = Array.isArray(q.data) ? q.data : [];
+  if (rows.length < 2) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm">
+          <History className="h-4 w-4" /> Revisions ({rows.length})
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {rows.map((r) => (
+          <DropdownMenuItem key={r.id} asChild>
+            <Link to={`/inspection-reports/${r.id}`} className="flex w-full items-center justify-between gap-3">
+              <span className={r.revisionNo === currentRevision ? 'font-semibold' : undefined}>Revision {r.revisionNo}</span>
+              <span className="text-xs text-slate-500">{r.statusLabel}</span>
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

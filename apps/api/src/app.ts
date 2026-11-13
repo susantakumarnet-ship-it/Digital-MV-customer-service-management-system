@@ -24,6 +24,8 @@ import { timeCorrectionsRouter, visitsRouter, workOrderVisitsRouter } from './mo
 import { inspectionReportsRouter, inspectionsRouter } from './modules/inspections/inspections.routes';
 import { registerInspectionGuards } from './modules/inspections/inspection.guards';
 import { canAccessReport } from './modules/inspections/inspection.service';
+import { reportReviewRouter, reviewsRouter } from './modules/reviews/reviews.routes';
+import { registerReviewGuards } from './modules/reviews/review.service';
 import { complaintsRouter } from './modules/complaints/complaints.routes';
 import { publicRouter } from './modules/complaints/public.routes';
 import { registerComplaintGuards } from './modules/complaints/complaint.guards';
@@ -38,6 +40,7 @@ export function createApp(): Express {
   registerComplaintGuards();
   registerWorkOrderGuards();
   registerInspectionGuards();
+  registerReviewGuards();
   registerAttachmentOwner('inspectionReport', (auth, ownerId) => canAccessReport(auth, ownerId));
   registerAttachmentOwner('complaint', (auth, ownerId, a) =>
     canAccessComplaint(auth, ownerId).then((ok) => ok && (a.context !== 'internal' || auth.permissions.has('complaint.readInternal'))),
@@ -125,6 +128,8 @@ export function createApp(): Express {
     timeCorrectionsRouter,
     inspectionsRouter,
     inspectionReportsRouter,
+    reviewsRouter,
+    reportReviewRouter,
   ];
   for (const r of routers) app.use(`/api/v1${r.base}`, r.router);
   // BRF §20 lists /api/v1/organizations as its own route: alias of /masters/organizations.

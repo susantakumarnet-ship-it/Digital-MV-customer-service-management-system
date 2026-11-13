@@ -26,6 +26,7 @@ import { TimeEvent } from '../visits/visit.models';
 import { loadVisitInScope } from '../visits/visit.service';
 import { WorkOrder } from '../work-orders/work-order.model';
 import { InspectionReport, InspectionTemplate, REPORT_SCOPE } from './inspection.models';
+import { ReviewAction } from '../reviews/review.model';
 
 type Doc = Record<string, any>;
 const oid = (v: unknown) => new Types.ObjectId(String(v));
@@ -376,6 +377,9 @@ export async function submitReport(ctx: RequestContext, id: string) {
 
 export async function getReport(auth: AuthContext, id: string): Promise<InspectionReportDto> {
   const r = (await loadReportInScope(auth, id)).toObject() as Doc;
+  // Feedback from the review that returned the previous revision (shown to engineers on this draft).
+  const returnedBy = r.previousRevisionId ? await ReviewAction.findOne({ reportId: r.previousRevisionId, action: 'return' }).lean<Doc>() : null;
+  const feedback = new Map(((returnedBy?.itemFeedback ?? []) as Doc[]).map((x) => [x.itemKey, x.comment as string]));
   const [def, evidence, asset, eq, wo] = await Promise.all([
     getDefinition('inspectionReport'),
     Attachment.find({ ownerType: 'inspectionReport', ownerId: r._id, removedAt: null }).sort({ createdAt: 1 }).lean<Doc[]>(),
@@ -388,7 +392,7 @@ export async function getReport(auth: AuthContext, id: string): Promise<Inspecti
   const items: ReportItemDto[] = (r.templateItems as TemplateItem[]).map((item) => {
     const res = byKey.get(item.key) as Doc | undefined;
     const ev = evidence.filter((a) => a.context === item.key);
-    return { ...item, result: res?.result ?? null, remarks: res?.remarks, reason: res?.reason, attachments: ev.map((a) => toAttachmentDto(a) as never), issues: itemIssues(item, res, ev) };
+    return { ...item, result: res?.result ?? null, remarks: res?.remarks, reason: res?.reason, attachments: ev.map((a) => toAttachmentDto(a) as never), issues: itemIssues(item, res, ev), feedback: feedback.get(item.key) };
   });
   const count = (k: string) => items.filter((i) => i.result === k).length;
   const isEngineer = (r.assigneeIds ?? []).map(String).includes(auth.userId);
@@ -424,6 +428,7 @@ export async function getReport(auth: AuthContext, id: string): Promise<Inspecti
     submittedByName: r.submittedByName,
     createdByName: r.createdByName,
     previousRevisionId: r.previousRevisionId ? String(r.previousRevisionId) : null,
+    reviewFeedback: returnedBy ? { reviewerName: returnedBy.reviewerName, comments: returnedBy.comments, at: returnedBy.actionAt } : null,
     permissions: {
       canEdit: draft && isEngineer && auth.permissions.has('inspection.create'),
       canSubmit: draft && isEngineer && auth.permissions.has('inspection.submit') && submissionIssues.length === 0,

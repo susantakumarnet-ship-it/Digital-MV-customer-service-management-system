@@ -77,4 +77,14 @@ export const MIGRATIONS: Migration[] = [
     },
     down: async () => undefined,
   },
+  {
+    id: '2026-11-13-005-review-actions',
+    description: 'Phase 6: reviewActions collection and indexes',
+    up: async () => {
+      const { ReviewAction } = await import('../../modules/reviews/review.model');
+      await ReviewAction.createCollection().catch(() => undefined);
+      await ReviewAction.createIndexes();
+    },
+    down: async () => undefined,
+  },
 ];

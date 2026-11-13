@@ -251,6 +251,8 @@ describe('board, workload and dashboards', () => {
     expect(a2.eligible).toBe(true);
     expect(b.eligible).toBe(false);
     expect((await api(tok.engA1).get('/work-orders/workload')).status).toBe(403);
+    // Administrators hold every permission but are not field engineers.
+    expect(r.body.some((e: any) => e.email === 'admin@test.local')).toBe(false);
   });
 
   it('flags overdue work orders and summarises by engineer', async () => {

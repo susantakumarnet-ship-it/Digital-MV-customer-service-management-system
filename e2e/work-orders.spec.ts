@@ -90,8 +90,9 @@ test.describe('Phase 4 work-order lifecycle', () => {
     await page.goto('/work-orders/board');
     await page.getByRole('group', { name: 'Board view' }).getByRole('button', { name: 'Week' }).click();
     const board = page.getByRole('grid', { name: 'Week assignment board' });
-    // Tomorrow may fall into next week.
-    if (!(await board.getByText(workOrderNo).count())) await page.getByRole('button', { name: 'Next week' }).click();
+    // The board weeks run Monday–Sunday: tomorrow is in next week only when tomorrow is a Monday.
+    await expect(board.getByText('Eli Engineer').first()).toBeVisible();
+    if (new Date(Date.now() + 86400_000).getDay() === 1) await page.getByRole('button', { name: 'Next week' }).click();
     await expect(board.getByText(workOrderNo).first()).toBeVisible();
     await board.getByText(workOrderNo).first().click();
     await expect(page).toHaveURL(workOrderUrl);

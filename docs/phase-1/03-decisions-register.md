@@ -75,6 +75,7 @@ These are tracked items found during delivery. Each must be closed, or explicitl
 |---|---|
 | 2026-11-12 | Register created in Phase 1. |
 | 2026-11-12 | D-02, D-03 and D-27 confirmed. The project owner accepted Phase 1. |
+| 2026-11-13 | Phase 6 accepted.|
 | 2026-11-13 | Phase 5 accepted. D-35 confirmed as built.|
 | 2026-11-13 | D-34 confirmed as built (multi-engineer visit status).|
 | 2026-11-13 | D-33 confirmed: Arrive at Site, Start Work and End Work are required before report submission.|

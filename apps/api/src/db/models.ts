@@ -15,6 +15,7 @@ import { Complaint } from '../modules/complaints/complaint.model';
 import { WorkOrder } from '../modules/work-orders/work-order.model';
 import { TimeCorrection, TimeEvent, Visit } from '../modules/visits/visit.models';
 import { InspectionReport, InspectionTemplate } from '../modules/inspections/inspection.models';
+import { ReviewAction } from '../modules/reviews/review.model';
 
 export const ALL_MODELS = [
   AuditLog,
@@ -36,4 +37,5 @@ export const ALL_MODELS = [
   TimeCorrection,
   InspectionTemplate,
   InspectionReport,
+  ReviewAction,
 ];

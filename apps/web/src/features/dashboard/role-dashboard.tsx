@@ -15,6 +15,7 @@ import { AdminDashboard } from './admin-dashboard';
 import { CustomerDashboard, ManagementDashboard, SupervisorDashboard } from './complaint-dashboards';
 import { EngineerDashboardWidgets } from './work-order-widgets';
 import { EngineerFieldWidgets, SupervisorFieldWidgets } from './field-widgets';
+import { ReviewerDashboard } from '@/features/reviews/reviewer-dashboard';
 
 interface RoleDashboardDef {
   permission: PermissionKey;
@@ -25,15 +26,6 @@ interface RoleDashboardDef {
 
 /** Honest role dashboards for roles whose modules arrive in later phases: what exists today, and when each widget arrives. */
 const ROLE_DASHBOARDS: RoleDashboardDef[] = [
-  {
-    permission: 'dashboard.reviewer',
-    title: 'Reviewer dashboard',
-    intro: 'Review submitted inspection reports, time logs and NCR verifications.',
-    upcoming: [
-      { label: 'Reports awaiting review and revision comparison', phase: 6 },
-      { label: 'NCRs submitted for verification', phase: 8 },
-    ],
-  },
   {
     permission: 'dashboard.storekeeper',
     title: 'Store dashboard',
@@ -52,6 +44,7 @@ export function DashboardPage() {
   if (hasPermission('dashboard.management')) return <ManagementDashboard />;
   if (hasPermission('dashboard.customer')) return <CustomerDashboard />;
   if (hasPermission('dashboard.engineer')) return <EngineerDashboard />;
+  if (hasPermission('dashboard.reviewer')) return <ReviewerDashboard />;
   const def = ROLE_DASHBOARDS.find((d) => hasPermission(d.permission));
   return <RoleDashboard def={def} />;
 }

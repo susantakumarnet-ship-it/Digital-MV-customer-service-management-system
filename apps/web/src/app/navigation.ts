@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bell, Boxes, CalendarRange, ClipboardCheck, ClipboardList, Database, Wrench, FileClock, GitBranch, History, LayoutDashboard, ListChecks, MapPinned, Settings2, ShieldCheck, Users } from 'lucide-react';
+import { Bell, Boxes, SearchCheck, CalendarRange, ClipboardCheck, ClipboardList, Database, Wrench, FileClock, GitBranch, History, LayoutDashboard, ListChecks, MapPinned, Settings2, ShieldCheck, Users } from 'lucide-react';
 import type { PermissionKey } from '@mv/shared';
 
 export interface NavItem {
@@ -12,7 +12,7 @@ export interface NavItem {
   /** Label shown to field engineers (workOrder.accept without workOrder.assign). */
   engineerLabel?: string;
   /** Live count badge (e.g. pending time corrections). */
-  badge?: 'pendingCorrections';
+  badge?: 'pendingCorrections' | 'pendingReviews';
 }
 
 export interface NavGroup {
@@ -29,6 +29,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/work-orders/board', label: 'Assignment board', icon: CalendarRange, anyOf: ['workOrder.assign'] },
       { to: '/visits', label: 'Visits', icon: MapPinned, anyOf: ['visit.read'], engineerLabel: 'My visits' },
       { to: '/inspection-reports', label: 'Inspection reports', icon: ClipboardCheck, anyOf: ['inspection.read'] },
+      { to: '/reviews', label: 'Reviews', icon: SearchCheck, anyOf: ['inspection.approve', 'inspection.return'], badge: 'pendingReviews' },
       { to: '/time-corrections', label: 'Time corrections', icon: History, anyOf: ['visit.approveCorrection'], badge: 'pendingCorrections' },
       { to: '/inspections/temporary-assets', label: 'Temporary assets', icon: Boxes, anyOf: ['inspection.reviewTempAsset'] },
       { to: '/notifications', label: 'Notifications', icon: Bell, anyOf: ['notification.read'] },
@@ -81,5 +82,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   inspections: 'Inspections',
   'temporary-assets': 'Temporary assets',
   checklists: 'Checklist templates',
+  reviews: 'Reviews',
+  compare: 'Compare revisions',
   new: 'New',
 };

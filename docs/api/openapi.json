@@ -7578,6 +7578,337 @@
         }
       }
     },
+    "/api/v1/reviews": {
+      "get": {
+        "tags": [
+          "Review & approval"
+        ],
+        "summary": "Review queue (default: submitted + under review) within scope; own reports are flagged",
+        "description": "Any authenticated user. Requires one of: `inspection.approve`, `inspection.return`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "SUBMITTED",
+                "UNDER_REVIEW",
+                "RETURNED",
+                "APPROVED",
+                "ALL"
+              ],
+              "default": "PENDING"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "required": false,
+            "name": "mineOnly",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/reviews/summary": {
+      "get": {
+        "tags": [
+          "Review & approval"
+        ],
+        "summary": "Reviewer KPIs within scope: pending, under review, waiting > 24 h / 48 h, approved this week / total",
+        "description": "Any authenticated user. Requires one of: `inspection.approve`, `inspection.return`, `inspection.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/reviews/{id}": {
+      "get": {
+        "tags": [
+          "Review & approval"
+        ],
+        "summary": "Review context for a report revision: checklist, evidence, six-step time log + flags, corrections, history, revisions",
+        "description": "Requires: `inspection.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/inspection-reports/{id}/review-actions": {
+      "post": {
+        "tags": [
+          "Review & approval"
+        ],
+        "summary": "Start review, approve (comments optional; multi-level aware) or return for correction (comments + per-item feedback)",
+        "description": "Returning creates the next DRAFT revision for the engineers; the returned revision is kept (superseded). Self-review is refused (BR-012).\n\nAny authenticated user. Requires one of: `inspection.approve`, `inspection.return`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "startReview",
+                      "approve",
+                      "return"
+                    ]
+                  },
+                  "comments": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "itemFeedback": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "itemKey": {
+                          "type": "string",
+                          "maxLength": 40
+                        },
+                        "comment": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2000
+                        }
+                      },
+                      "required": [
+                        "itemKey",
+                        "comment"
+                      ]
+                    },
+                    "maxItems": 300,
+                    "default": []
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/inspection-reports/{id}/revisions": {
+      "get": {
+        "tags": [
+          "Review & approval"
+        ],
+        "summary": "All revisions of this visit's report",
+        "description": "Requires: `inspection.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/inspection-reports/{id}/compare": {
+      "get": {
+        "tags": [
+          "Review & approval"
+        ],
+        "summary": "Compare this revision with another revision of the same report (item-by-item)",
+        "description": "Requires: `inspection.read`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            },
+            "required": true,
+            "name": "with",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/v1/public/complaint-form": {
       "get": {
         "tags": [
