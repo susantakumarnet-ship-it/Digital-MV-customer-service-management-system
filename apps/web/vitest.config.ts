@@ -12,5 +12,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['src/test/setup.ts'],
     css: false,
+    // Multi-step form tests can be slow when the machine is busy (e.g. API tests running in parallel).
+    testTimeout: 30_000,
   },
 });

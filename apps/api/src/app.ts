@@ -20,6 +20,10 @@ import { settingsRouter, workflowsRouter } from './modules/settings/settings.rou
 import { usersRouter } from './modules/users/users.routes';
 import { complaintWorkOrdersRouter, engineerRouter, workOrdersRouter } from './modules/work-orders/work-orders.routes';
 import { registerWorkOrderGuards } from './modules/work-orders/work-order.guards';
+import { timeCorrectionsRouter, visitsRouter, workOrderVisitsRouter } from './modules/visits/visits.routes';
+import { inspectionReportsRouter, inspectionsRouter } from './modules/inspections/inspections.routes';
+import { registerInspectionGuards } from './modules/inspections/inspection.guards';
+import { canAccessReport } from './modules/inspections/inspection.service';
 import { complaintsRouter } from './modules/complaints/complaints.routes';
 import { publicRouter } from './modules/complaints/public.routes';
 import { registerComplaintGuards } from './modules/complaints/complaint.guards';
@@ -33,6 +37,8 @@ export function createApp(): Express {
   // Business-rule guards and attachment-owner access checks (fail closed if missing).
   registerComplaintGuards();
   registerWorkOrderGuards();
+  registerInspectionGuards();
+  registerAttachmentOwner('inspectionReport', (auth, ownerId) => canAccessReport(auth, ownerId));
   registerAttachmentOwner('complaint', (auth, ownerId, a) =>
     canAccessComplaint(auth, ownerId).then((ok) => ok && (a.context !== 'internal' || auth.permissions.has('complaint.readInternal'))),
   );
@@ -114,6 +120,11 @@ export function createApp(): Express {
     workOrdersRouter,
     complaintWorkOrdersRouter,
     engineerRouter,
+    visitsRouter,
+    workOrderVisitsRouter,
+    timeCorrectionsRouter,
+    inspectionsRouter,
+    inspectionReportsRouter,
   ];
   for (const r of routers) app.use(`/api/v1${r.base}`, r.router);
   // BRF §20 lists /api/v1/organizations as its own route: alias of /masters/organizations.

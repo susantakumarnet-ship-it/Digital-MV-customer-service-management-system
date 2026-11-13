@@ -13,6 +13,8 @@ import { Attachment } from '../core/storage/attachment.model';
 import { IdempotencyKey } from '../core/idempotency/idempotency.service';
 import { Complaint } from '../modules/complaints/complaint.model';
 import { WorkOrder } from '../modules/work-orders/work-order.model';
+import { TimeCorrection, TimeEvent, Visit } from '../modules/visits/visit.models';
+import { InspectionReport, InspectionTemplate } from '../modules/inspections/inspection.models';
 
 export const ALL_MODELS = [
   AuditLog,
@@ -29,4 +31,9 @@ export const ALL_MODELS = [
   IdempotencyKey,
   Complaint,
   WorkOrder,
+  Visit,
+  TimeEvent,
+  TimeCorrection,
+  InspectionTemplate,
+  InspectionReport,
 ];

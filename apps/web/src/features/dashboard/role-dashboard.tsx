@@ -14,6 +14,7 @@ import type { NotificationDto } from '@/lib/types';
 import { AdminDashboard } from './admin-dashboard';
 import { CustomerDashboard, ManagementDashboard, SupervisorDashboard } from './complaint-dashboards';
 import { EngineerDashboardWidgets } from './work-order-widgets';
+import { EngineerFieldWidgets, SupervisorFieldWidgets } from './field-widgets';
 
 interface RoleDashboardDef {
   permission: PermissionKey;
@@ -30,7 +31,6 @@ const ROLE_DASHBOARDS: RoleDashboardDef[] = [
     intro: 'Review submitted inspection reports, time logs and NCR verifications.',
     upcoming: [
       { label: 'Reports awaiting review and revision comparison', phase: 6 },
-      { label: 'Time-correction approvals', phase: 5 },
       { label: 'NCRs submitted for verification', phase: 8 },
     ],
   },
@@ -60,7 +60,10 @@ function EngineerDashboard() {
   return (
     <div>
       <PageHeader title="My work" description="Your assigned jobs and planned visits. Accept new work as soon as you can." />
-      <EngineerDashboardWidgets />
+      <div className="space-y-4">
+        <EngineerFieldWidgets />
+        <EngineerDashboardWidgets />
+      </div>
     </div>
   );
 }
@@ -78,6 +81,9 @@ function RoleDashboard({ def }: { def?: RoleDashboardDef }) {
   return (
     <div>
       <PageHeader title={def?.title ?? 'Dashboard'} description={def?.intro} />
+      <div className="mb-4">
+        <SupervisorFieldWidgets />
+      </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader title={`Welcome, ${first}`} description="Your access in this system" />

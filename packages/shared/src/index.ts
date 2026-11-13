@@ -10,3 +10,5 @@ export * from './schemas/settings';
 export * from './schemas/workflow';
 export * from './schemas/complaints';
 export * from './schemas/work-orders';
+export * from './schemas/visits';
+export * from './schemas/inspections';

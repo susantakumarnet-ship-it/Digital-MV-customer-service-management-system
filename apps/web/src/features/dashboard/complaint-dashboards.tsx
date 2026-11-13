@@ -10,6 +10,7 @@ import { useComplaintSummary } from '@/features/complaints/complaint-lib';
 import { ComplaintCharts, ComplaintKpiGrid, ComplaintMiniList } from './complaint-widgets';
 import { useWorkOrderSummary } from '@/features/work-orders/wo-lib';
 import { TeamWorkloadCard, WorkOrderCharts, WorkOrderKpiGrid } from './work-order-widgets';
+import { SupervisorFieldWidgets } from './field-widgets';
 
 function Upcoming({ items }: { items: { label: string; phase: number }[] }) {
   return (
@@ -73,6 +74,7 @@ export function SupervisorDashboard() {
           {hasPermission('workOrder.assign') && <TeamWorkloadCard />}
         </section>
       )}
+      <SupervisorFieldWidgets />
       <Upcoming
         items={[
           { label: 'Pending material requests for approval', phase: 7 },

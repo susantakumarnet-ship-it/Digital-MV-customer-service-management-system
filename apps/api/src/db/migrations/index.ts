@@ -64,4 +64,17 @@ export const MIGRATIONS: Migration[] = [
         .updateOne({ entity: 'workOrder' }, { $pull: { transitions: { action: 'reassign' } }, $set: { version: 1 } } as never);
     },
   },
+  {
+    id: '2026-11-13-004-visits-inspections',
+    description: 'Phase 5: visits, timeEvents, timeCorrections, inspectionTemplates, inspectionReports collections and indexes',
+    up: async () => {
+      const { Visit, TimeEvent, TimeCorrection } = await import('../../modules/visits/visit.models');
+      const { InspectionTemplate, InspectionReport } = await import('../../modules/inspections/inspection.models');
+      for (const model of [Visit, TimeEvent, TimeCorrection, InspectionTemplate, InspectionReport]) {
+        await model.createCollection().catch(() => undefined);
+        await model.createIndexes();
+      }
+    },
+    down: async () => undefined,
+  },
 ];

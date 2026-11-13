@@ -242,7 +242,7 @@ export function EngineerDashboardWidgets() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="My active work orders" value={rows.length} loading={q.isLoading} icon={<Wrench className="h-5 w-5" />} />
         <KpiCard label="Awaiting my acceptance" value={awaiting.length} loading={q.isLoading} accent="amber" icon={<Hourglass className="h-5 w-5" />} />
-        <KpiCard label="Visits today" value={todays.length} loading={q.isLoading} accent="teal" icon={<CalendarClock className="h-5 w-5" />} />
+        <KpiCard label="Work planned today" value={todays.length} loading={q.isLoading} accent="teal" icon={<CalendarClock className="h-5 w-5" />} />
         <KpiCard label="Overdue" value={overdue.length} loading={q.isLoading} accent={overdue.length ? 'red' : 'slate'} icon={<AlertTriangle className="h-5 w-5" />} />
       </div>
       <ListCard title="Awaiting my acceptance" description="Accept new work so your supervisor knows it is planned." rows={awaiting} empty="Nothing to accept" loading={q.isLoading}>
@@ -253,8 +253,8 @@ export function EngineerDashboardWidgets() {
         )}
       </ListCard>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <ListCard title="Today's visits" rows={todays} empty="No visits planned today" loading={q.isLoading} />
-        <ListCard title="Upcoming visits" description="Next 7 days" rows={upcoming} empty="No visits planned in the next 7 days" loading={q.isLoading} />
+        <ListCard title="Work orders planned today" rows={todays} empty="No work orders planned today" loading={q.isLoading} />
+        <ListCard title="Upcoming work orders" description="Planned in the next 7 days" rows={upcoming} empty="No work orders planned in the next 7 days" loading={q.isLoading} />
       </div>
       <ListCard title="Overdue work orders" rows={overdue} empty="No overdue work" loading={q.isLoading} />
       <div className="flex justify-end">
@@ -266,7 +266,6 @@ export function EngineerDashboardWidgets() {
         <CardHeader title="Coming to this dashboard" />
         <ul className="space-y-2 px-5 py-4">
           {[
-            { label: 'Site visits, six-step time tracking and inspection checklists', phase: 5 },
             { label: 'Returned reports awaiting correction', phase: 6 },
             { label: 'Material requests', phase: 7 },
           ].map((u) => (

@@ -21,6 +21,13 @@ import { PublicComplaintPage } from '@/features/complaints/public-complaint-page
 import { AssignmentBoardPage } from '@/features/work-orders/assignment-board-page';
 import { WorkOrderDetailPage } from '@/features/work-orders/work-order-detail-page';
 import { WorkOrdersListPage } from '@/features/work-orders/work-orders-list-page';
+import { VisitDetailPage } from '@/features/visits/visit-detail-page';
+import { VisitsListPage } from '@/features/visits/visits-list-page';
+import { TimeCorrectionsPage } from '@/features/visits/time-corrections-page';
+import { InspectionReportPage } from '@/features/inspections/inspection-report-page';
+import { InspectionReportsListPage } from '@/features/inspections/inspection-reports-list-page';
+import { TemplatesPage } from '@/features/inspections/templates-page';
+import { TemporaryAssetsPage } from '@/features/inspections/temporary-assets-page';
 import { EmptyState } from '@/components/states';
 import { AppLayout } from './layout/app-layout';
 import { RouteError } from './route-error';
@@ -107,6 +114,54 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'visits',
+        element: (
+          <RequirePermission all={['visit.read']}>
+            <VisitsListPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'visits/:id',
+        element: (
+          <RequirePermission all={['visit.read']}>
+            <VisitDetailPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'time-corrections',
+        element: (
+          <RequirePermission any={['visit.approveCorrection', 'visit.requestCorrection']}>
+            <TimeCorrectionsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'inspection-reports',
+        element: (
+          <RequirePermission all={['inspection.read']}>
+            <InspectionReportsListPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'inspection-reports/:id',
+        element: (
+          <RequirePermission all={['inspection.read']}>
+            <InspectionReportPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'inspections/temporary-assets',
+        element: (
+          <RequirePermission all={['inspection.reviewTempAsset']}>
+            <TemporaryAssetsPage />
+          </RequirePermission>
+        ),
+      },
+      {
         path: 'notifications',
         element: (
           <RequirePermission all={['notification.read']}>
@@ -164,6 +219,14 @@ export const router = createBrowserRouter([
             element: (
               <RequirePermission all={['settings.read']}>
                 <SettingsPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'checklists',
+            element: (
+              <RequirePermission all={['inspection.manageTemplates']}>
+                <TemplatesPage />
               </RequirePermission>
             ),
           },

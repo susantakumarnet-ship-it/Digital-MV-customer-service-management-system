@@ -36,6 +36,8 @@ type Doc = Record<string, any>;
 const oid = (v: unknown) => new Types.ObjectId(String(v));
 const DONE = WORK_ORDER_DONE_STATUSES as readonly string[];
 const EDITABLE = WORK_ORDER_EDITABLE_STATUSES as readonly string[];
+/** Co-assignees may still accept (acknowledge) once another engineer accepted or work has started. */
+const ACKNOWLEDGE_IN = ['ACCEPTED', 'SCHEDULED', 'IN_PROGRESS', 'ON_HOLD', 'WORK_COMPLETED'];
 
 export function isWorkOrderOverdue(w: Doc, now = new Date()) {
   return Boolean(w.dueAt && new Date(w.dueAt) < now && !DONE.includes(w.status));
@@ -350,8 +352,8 @@ export async function transitionWorkOrder(ctx: RequestContext, id: string, body:
     if (body.action === 'accept') {
       const isAssignee = w.assigneeIds.map(String).includes(auth.userId);
       const already = w.acceptedBy.some((a) => String(a.userId) === auth.userId);
-      // Co-assignees acknowledging already-accepted work: record acceptance without a status change.
-      if (isAssignee && !already && (w.status === 'ACCEPTED' || w.status === 'SCHEDULED')) {
+      // Co-assignees acknowledging accepted or in-progress work: record acceptance without a status change.
+      if (isAssignee && !already && ACKNOWLEDGE_IN.includes(w.status)) {
         if (!auth.permissions.has('workOrder.accept')) throw forbidden();
         w.acceptedBy.push({ userId: auth.userId, at: now } as never);
         await w.save({ session });
@@ -482,7 +484,7 @@ export async function getWorkOrder(auth: AuthContext, id: string): Promise<WorkO
     permissions: {
       canEdit: auth.permissions.has('workOrder.update') && EDITABLE.includes(w.status),
       canAssign: auth.permissions.has('workOrder.assign') && EDITABLE.includes(w.status),
-      canAccept: auth.permissions.has('workOrder.accept') && isAssignee && !accepted && ['ASSIGNED', 'ACCEPTED', 'SCHEDULED'].includes(w.status),
+      canAccept: auth.permissions.has('workOrder.accept') && isAssignee && !accepted && (w.status === 'ASSIGNED' || ACKNOWLEDGE_IN.includes(w.status)),
     },
     updatedAt: w.updatedAt,
   } as WorkOrderDetailDto;

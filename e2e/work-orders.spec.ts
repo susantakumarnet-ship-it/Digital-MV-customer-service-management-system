@@ -38,7 +38,8 @@ test.describe('Phase 4 work-order lifecycle', () => {
     await signIn(page, 'supervisor@example.com');
     await page.goto('/complaints');
     await page.getByLabel('Search complaints').fill('SF6 low-pressure');
-    await page.getByRole('link', { name: /^MV-\d{4}-\d{6}$/ }).first().click();
+    // Wait for the filtered row before opening it (the list filters after a short debounce).
+    await page.getByRole('row', { name: /Hillcrest/ }).getByRole('link', { name: /^MV-\d{4}-\d{6}$/ }).first().click();
 
     await pick(page, /^Priority/, 'High');
     await page.getByRole('button', { name: 'Classify & start review' }).click();

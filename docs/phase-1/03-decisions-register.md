@@ -52,6 +52,10 @@ The **Needed by** column is the latest phase that can proceed on the provisional
 | D-31 | How a public reporter *without* an account answers a "request for information". | Portal customers answer in the app. Public reporters get an email asking them to reply to the support contact, and the supervisor records the response with "Information received" plus a note. A secure single-use reply link can be added later if wanted. | P3 | Confirmed 2026-11-13 |
 | D-32 | CAPTCHA provider for the public form (refines D-16). | Cloudflare Turnstile support is built in and switches on when `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set. Until then: honeypot, minimum fill time, per-IP hourly limit and idempotency. | P10 | Open |
 
+| D-33 | Which time events must exist before an inspection report can be submitted (BR-008 says "required time events"). | The submitting engineer must have recorded **Arrive at Site, Start Work and End Work** on that visit. Return travel can be recorded after submission. | P5 | Confirmed 2026-11-13 |
+| D-34 | What the visit status means when several engineers on one visit each record their own six-step sequence (D-14). | Visit status = the furthest step reached by any engineer. It becomes **Completed** only when every engineer who started has recorded Arrive at Base. The first Start Travel moves the work order and complaint to *In Progress*. An engineer must have accepted the work order before recording time. | P5 | Confirmed 2026-11-13 |
+| D-35 | Who may approve time corrections. | Holders of `visit.approveCorrection` (Supervisor, Reviewer). Never the engineer whose time it is, and never the person who requested the correction. | P5 | Confirmed 2026-11-13 |
+
 ## Known issues and security register
 
 These are tracked items found during delivery. Each must be closed, or explicitly accepted by the project owner, before production go-live (Phase 10).
@@ -71,6 +75,9 @@ These are tracked items found during delivery. Each must be closed, or explicitl
 |---|---|
 | 2026-11-12 | Register created in Phase 1. |
 | 2026-11-12 | D-02, D-03 and D-27 confirmed. The project owner accepted Phase 1. |
+| 2026-11-13 | Phase 5 accepted. D-35 confirmed as built.|
+| 2026-11-13 | D-34 confirmed as built (multi-engineer visit status).|
+| 2026-11-13 | D-33 confirmed: Arrive at Site, Start Work and End Work are required before report submission.|
 | 2026-11-13 | Phase 4 accepted. Work-order workflow v2 adds the system "reassign" transition (migration 003).|
 | 2026-11-13 | Phase 3 accepted. D-01 approved as implemented.|
 | 2026-11-13 | Phase 3: D-13, D-20, D-29, D-30 and D-31 confirmed; D-32 added.|

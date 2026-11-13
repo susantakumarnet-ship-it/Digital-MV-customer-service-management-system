@@ -15,6 +15,7 @@ import { api, errorMessage, parseApiError } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { cn, humanize } from '@/lib/utils';
 import { AssignDialog, PlanningDialog } from './work-order-dialogs';
+import { WorkOrderVisitsPanel } from '@/features/visits/visit-dialogs';
 
 type Action = WorkOrderDetailDto['availableActions'][number];
 const DANGER = new Set(['cancel']);
@@ -238,6 +239,8 @@ export function WorkOrderDetailView({ w, onChanged }: { w: WorkOrderDetailDto; o
               </details>
             </CardBody>
           </Card>
+
+          <WorkOrderVisitsPanel workOrder={w} />
 
           <Card>
             <CardHeader title="Assignment history" description="Every assignment change is recorded (WO-04)." />

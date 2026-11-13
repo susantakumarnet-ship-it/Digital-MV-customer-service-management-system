@@ -133,6 +133,36 @@ export async function seedDemo(log: Log, demoPassword: string) {
   ])
     await upsert(InventoryItem, code, { name, unit, category });
 
+  log('Sample checklist templates (D-06: replace with the real checklists)…');
+  const { InspectionTemplate } = await import('../../modules/inspections/inspection.models');
+  const sample = (key: string, section: string, description: string, extra: Doc = {}) => ({ key, section, description, required: true, evidence: 'NONE', naReasonRequired: false, evidenceOnFail: false, ...extra });
+  const common = [
+    sample('SAFE', 'Safety', 'Site safety briefing completed and permit-to-work in place'),
+    sample('VIS', 'Visual', 'Enclosure, doors and locks in good condition', { evidence: 'PHOTO' }),
+    sample('LBL', 'Visual', 'Labels, warning signs and single-line diagram present', { required: false }),
+  ];
+  const specific: Record<string, Doc[]> = {
+    RMU: [sample('SF6', 'Tests', 'SF6 gas pressure within the green band', { naReasonRequired: true }), sample('OPS', 'Tests', 'Switch operation (open/close/earth) verified'), sample('IR', 'Tests', 'Insulation resistance test results recorded', { evidence: 'DOCUMENT', evidenceOnFail: true })],
+    TRF: [sample('OIL', 'Tests', 'Oil level and leaks inspected', { evidenceOnFail: true }), sample('TMP', 'Tests', 'Winding / oil temperature readings recorded'), sample('BDV', 'Tests', 'Oil breakdown voltage test (if due)', { naReasonRequired: true, evidence: 'DOCUMENT' })],
+    SWGR: [sample('BRK', 'Tests', 'Circuit breaker operation and counter reading'), sample('PRT', 'Tests', 'Protection relay healthy, no active alarms', { evidenceOnFail: true })],
+    CBL: [sample('TRM', 'Visual', 'Terminations free from tracking or overheating', { evidence: 'PHOTO' }), sample('IRC', 'Tests', 'Cable insulation resistance recorded', { evidence: 'DOCUMENT' })],
+    RLY: [sample('SET', 'Tests', 'Relay settings match the approved setting sheet', { evidence: 'DOCUMENT' }), sample('TRP', 'Tests', 'Secondary injection / trip test performed', { naReasonRequired: true })],
+  };
+  for (const [code, items] of Object.entries(specific)) {
+    if (await InspectionTemplate.exists({ equipmentTypeId: eq[code]._id })) continue;
+    await InspectionTemplate.create({
+      name: `${eq[code].name} inspection (SAMPLE)`,
+      equipmentTypeId: eq[code]._id,
+      version: 1,
+      status: 'ACTIVE',
+      description: 'Sample checklist for demonstration. Replace with the approved checklist (decision D-06).',
+      items: [...common, ...items],
+      publishedAt: new Date(),
+      effectiveFrom: new Date(),
+      publishedByName: 'Demo seed',
+    });
+  }
+
   log('Demo complaints…');
   const { Complaint } = await import('../../modules/complaints/complaint.model');
   const { createComplaint } = await import('../../modules/complaints/complaint.service');

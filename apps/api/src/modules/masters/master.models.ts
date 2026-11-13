@@ -6,7 +6,8 @@ const ref = (model: string, required = false) => ({ type: Schema.Types.ObjectId,
 const str = (required = false) => ({ type: String, trim: true, required });
 const CI = { locale: 'en', strength: 2 } as const;
 
-function masterSchema(collection: string, fields: SchemaDefinition) {
+/** Generic over the field definition so each master keeps its typed fields (no `any` at call sites). */
+function masterSchema<T extends SchemaDefinition>(collection: string, fields: T) {
   const schema = new Schema(
     {
       ...fields,

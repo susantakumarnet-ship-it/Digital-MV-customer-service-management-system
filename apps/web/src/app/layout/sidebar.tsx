@@ -3,7 +3,23 @@ import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useAuth } from '@/features/auth/auth-context';
 import { BrandMark } from '@/features/auth/auth-layout';
 import { cn } from '@/lib/utils';
-import { visibleNav } from '../navigation';
+import { useCorrections } from '@/features/visits/visit-lib';
+import { visibleNav, type NavItem } from '../navigation';
+
+/** Live count badge on a nav item (only queried for users who can see the item). */
+function NavBadge({ kind, collapsed }: { kind: NonNullable<NavItem['badge']>; collapsed: boolean }) {
+  const q = useCorrections({ status: 'PENDING', limit: 1 }, kind === 'pendingCorrections');
+  const n = q.data?.meta.total ?? 0;
+  if (!n) return null;
+  return (
+    <span
+      className={cn('ml-auto rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold leading-5 text-white', collapsed && 'absolute right-1 top-0.5 ml-0')}
+      aria-label={`${n} pending`}
+    >
+      {n > 99 ? '99+' : n}
+    </span>
+  );
+}
 
 export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { hasAny } = useAuth();
@@ -29,7 +45,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                   title={collapsed ? item.label : undefined}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       isActive && !shadowed(item.to) ? 'bg-royal-700 text-white' : 'text-navy-100 hover:bg-navy-800 hover:text-white',
                       collapsed && 'justify-center px-0',
                     )
@@ -37,6 +53,7 @@ export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNa
                 >
                   <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
                   <span className={cn(collapsed && 'sr-only')}>{item.label}</span>
+                  {item.badge && <NavBadge kind={item.badge} collapsed={collapsed} />}
                 </NavLink>
               </li>
             ))}

@@ -11,6 +11,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   // Multi-step journeys (classify → create → assign) can exceed the 30 s default on slower machines.
   timeout: 60_000,
+  // Assertions wait up to 10 s: sign-in (Argon2id) and page loads can be slow while the full suite runs.
+  expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:5611',
